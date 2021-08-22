@@ -18,7 +18,7 @@ speed = 150
 barrier_dist = 70
 repel_dist = 160
 
---- Black hole, Space travel ---
+--- Black hole, Space travel? ---
 speed = 25
 barrier_dist = 100
 repel_dist = 400
@@ -47,12 +47,17 @@ repel_dist = 1
 speed = 10
 barrier_dist = 10
 repel_dist = 5
+
+--- Black sun ---
+speed = 136
+barrier_dist = 203
+repel_dist = 50
 """
 speed = 5
 barrier_dist = 40
 repel_dist = 50
 
-MAX_PARTICLES = 2800
+MAX_PARTICLES = 3500
 
 class Text:
     all_text = []
@@ -68,7 +73,10 @@ class Text:
         global speed
         global barrier_dist
         global repel_dist
-        settings = [speed, barrier_dist, repel_dist]
+        try:
+            settings = [speed, barrier_dist, repel_dist, self.fps]
+        except AttributeError:
+            settings = [speed, barrier_dist, repel_dist, None]
 
         for i, text in enumerate(self.__class__.all_text):
             if text == self:
@@ -131,8 +139,9 @@ class Particle:
         global speed
         global barrier_dist
         global repel_dist
+
         mouse_pos = pg.mouse.get_pos()
-        left_button,_,right_button = pg.mouse.get_pressed()
+        left_button, _, right_button = pg.mouse.get_pressed()
 
         magnitude = self._hypotenuse(mouse_pos)
         movement = self._normalize(mouse_pos)
@@ -178,18 +187,18 @@ class Particle:
 
     @classmethod
     def group_draw(cls, screen):
-        for fish in cls.all_particles:
-            fish.draw(screen)
+        for particle in cls.all_particles:
+            particle.draw(screen)
 
     @classmethod
     def group_events(cls):
-        for fish in cls.all_particles:
-            fish.handle_events()
+        for particle in cls.all_particles:
+            particle.handle_events()
 
     @classmethod
     def group_collision(cls, other_rects):
-        for fish in cls.all_particles:
-            fish.handle_collision(other_rects)
+        for particle in cls.all_particles:
+            particle.handle_collision(other_rects)
 
 
 
@@ -202,6 +211,7 @@ class Game:
         self.speed_text = Text("Speed: ")
         self.barrier_text = Text("Barrier distance: ")
         self.repel_text = Text("Repel distance: ")
+        self.fps_text = Text("FPS: ")
 
     def run(self):
         FPS = 60
@@ -217,7 +227,8 @@ class Game:
             Particle.group_draw(self.screen)
             Text.group_draw(self.screen)
 
-            self.clock.tick(FPS)
+            dt = self.clock.tick(FPS)
+            self.fps_text.fps = dt
             pg.display.update()
 
 
@@ -227,7 +238,5 @@ if __name__ == '__main__':
     display = pg.display.set_mode(screen_size, flags=0)
 
     Game(display).run()
-
-
 
 
