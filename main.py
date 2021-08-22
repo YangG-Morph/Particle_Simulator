@@ -3,7 +3,7 @@ import pygame as pg
 import sys
 
 """ 
---- Jello? ---
+--- Jello ---
 speed = 5
 barrier_dist = 40
 repel_dist = 50
@@ -18,12 +18,17 @@ speed = 150
 barrier_dist = 70
 repel_dist = 160
 
---- Black hole, Space travel? ---
+--- Black hole, Space travel ---
 speed = 25
 barrier_dist = 100
 repel_dist = 400
 
---- Particle scale --- 
+--- Grouped ---
+speed = 407
+barrier_dist = 273
+repel_dist = 3
+
+--- Fish scale --- 
 speed = 350
 barrier_dist = 330
 repel_dist = 1
@@ -222,57 +227,6 @@ if __name__ == '__main__':
     display = pg.display.set_mode(screen_size, flags=0)
 
     Game(display).run()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
