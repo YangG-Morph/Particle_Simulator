@@ -7,55 +7,79 @@ import sys
 speed = 5
 barrier_dist = 40
 repel_dist = 50
+repel_multiplier = 20
 
---- Donut ---
+--- Big Donut ---
 speed = 300
 barrier_dist = 100
 repel_dist = 140
+repel_multiplier = 20
+
+--- Small donut ---
+speed = 75
+barrier_dist = 17
+repel_dist = 435
+repel_multiplier = 2
 
 --- Ring ---
 speed = 150
 barrier_dist = 70
 repel_dist = 160
+repel_multiplier = 20
 
---- Black hole, Space travel? ---
+--- Black hole, Space travel ---
 speed = 25
 barrier_dist = 100
 repel_dist = 400
+repel_multiplier = 20
 
 --- Grouped ---
 speed = 407
 barrier_dist = 273
 repel_dist = 3
+repel_multiplier = 20
 
 --- Fish scale --- 
 speed = 350
 barrier_dist = 330
 repel_dist = 1
+repel_multiplier = 20
 
 --- Crystal ball ---
 speed = 150
 barrier_dist = 1
 repel_dist = 288
+repel_multiplier = 20
 
 --- Three X's ---
 speed = 18
 barrier_dist = 10
 repel_dist = 1
+repel_multiplier = 20
 
 --- Magic square ---
 speed = 10
 barrier_dist = 10
 repel_dist = 5
+repel_multiplier = 20
 
 --- Black sun ---
 speed = 136
 barrier_dist = 203
 repel_dist = 50
+repel_multiplier = 20
+
+--- Ball of Energy ---
+speed = 21
+barrier_dist = 4
+repel_dist = 130
+repel_multiplier = 4
+
 """
 speed = 5
 barrier_dist = 40
 repel_dist = 50
+repel_multiplier = 20
 
 MAX_PARTICLES = 3000
 
@@ -73,10 +97,12 @@ class Text:
         global speed
         global barrier_dist
         global repel_dist
+        global repel_multiplier
+
         try:
-            settings = [speed, barrier_dist, repel_dist, self.fps]
+            settings = [speed, barrier_dist, repel_dist, repel_multiplier, self.fps]
         except AttributeError:
-            settings = [speed, barrier_dist, repel_dist, None]
+            settings = [speed, barrier_dist, repel_dist, repel_multiplier, None]
 
         for i, text in enumerate(self.__class__.all_text):
             if text == self:
@@ -139,6 +165,7 @@ class Particle:
         global speed
         global barrier_dist
         global repel_dist
+        global repel_multiplier
 
         mouse_pos = pg.mouse.get_pos()
         left_button, _, right_button = pg.mouse.get_pressed()
@@ -154,11 +181,12 @@ class Particle:
             speed = random.SystemRandom().randint(1, 500)
             barrier_dist = random.SystemRandom().randint(1, 300)
             repel_dist = random.SystemRandom().randint(1, 500)
+            repel_multiplier = random.SystemRandom().randint(1, 20)
         elif not left_button and not right_button:
             self.clicked = False
 
         if magnitude < barrier_dist:
-            self._handle_movement(random.SystemRandom().sample(range(-repel_dist, repel_dist), 2), 20)
+            self._handle_movement(random.SystemRandom().sample(range(-repel_dist, repel_dist), 2), repel_multiplier)
         else:
             self._handle_movement(movement, speed)
 
@@ -211,6 +239,7 @@ class Game:
         self.speed_text = Text("Speed: ")
         self.barrier_text = Text("Barrier distance: ")
         self.repel_text = Text("Repel distance: ")
+        self.repel_mult_text = Text("Repel mult: ")
         self.fps_text = Text("FPS: ")
 
     def run(self):
