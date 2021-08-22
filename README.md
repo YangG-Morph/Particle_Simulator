@@ -1,4 +1,5 @@
-# Particle_Simulator[Made with Pygame]
+# Particle_Simulator
+[Made with Pygame]
 Simulates particles moving towards the mouse.
 
 Has some predefined settings for reference at the top. Left click to deflect particles and right click to randomize settings.
