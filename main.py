@@ -57,7 +57,7 @@ speed = 5
 barrier_dist = 40
 repel_dist = 50
 
-MAX_PARTICLES = 3500
+MAX_PARTICLES = 3000
 
 class Text:
     all_text = []
@@ -227,8 +227,8 @@ class Game:
             Particle.group_draw(self.screen)
             Text.group_draw(self.screen)
 
-            dt = self.clock.tick(FPS)
-            self.fps_text.fps = dt
+            self.clock.tick(FPS)
+            self.fps_text.fps = int(self.clock.get_fps())
             pg.display.update()
 
 
