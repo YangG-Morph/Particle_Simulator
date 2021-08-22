@@ -1,7 +1,7 @@
 import random
 import pygame as pg
 import sys
-
+from itertools import chain
 """ 
 --- Jello ---
 speed = 5
@@ -44,6 +44,12 @@ speed = 350
 barrier_dist = 330
 repel_dist = 1
 repel_multiplier = 20
+
+--- Trees ---
+speed = 350
+barrier_dist = 330
+repel_dist = 1
+repel_multiplier = 200
 
 --- Crystal ball ---
 speed = 150
@@ -95,7 +101,9 @@ class Text:
         self.orig_text = text
         self.color = color
         self.rendered_text = pg.font.SysFont("Calibri", 24).render(f"{self.orig_text}", True, self.color)
+        self.prev_value = self.rendered_text
         self.position = (0, 0)
+        self.font = pg.font.SysFont("Calibri", 24)
         self.__class__.all_text.append(self)
 
     def update(self):
@@ -104,16 +112,19 @@ class Text:
         global repel_dist
         global repel_multiplier
 
+        margin_y = 3
+        settings = [speed, barrier_dist, repel_dist, repel_multiplier]
+
         try:
-            settings = [speed, barrier_dist, repel_dist, repel_multiplier, self.fps]
+            settings.append(self.fps)
         except AttributeError:
-            settings = [speed, barrier_dist, repel_dist, repel_multiplier, None]
+            settings.append(None)
 
         for i, text in enumerate(self.__class__.all_text):
-            if text == self:
-                self.position = (0, i * self.rendered_text.get_height())
-                font = pg.font.SysFont("Calibri", 24)
-                self.rendered_text = font.render(f"{self.orig_text}{settings[i]}", True, self.color)
+            if text == self and self.prev_value != settings[i]:
+                self.position = (0, i * self.rendered_text.get_height() + margin_y)
+                self.prev_value = settings[i]
+                self.rendered_text = self.font.render(f"{self.orig_text}{settings[i]}", True, self.color)
 
     def draw(self, screen):
         self.update()
@@ -121,8 +132,8 @@ class Text:
 
     @classmethod
     def group_draw(cls, screen):
-        for text in cls.all_text:
-            text.draw(screen)
+        [text.draw(screen) for text in cls.all_text]
+
 
 class Particle:
     all_particles = []
@@ -139,6 +150,7 @@ class Particle:
         self.fg_color = fg_color
         self.rect = pg.Rect(position, size)
         self.surface = pg.Surface(size)
+        self.surface.fill(self.bg_color)
         self.clicked = False
         self.__class__.all_particles.append(self)
 
@@ -148,8 +160,9 @@ class Particle:
                 self.position = (self.position[0], other_rect.y - self.rect.height)
 
     def _handle_movement(self, movement, multiplier=1):
+        """ TODO this function lags?"""
         if multiplier > 1:
-            movement = tuple(i * multiplier for i in movement)
+            movement = (i * multiplier for i in movement)
         self.position = tuple(i + j for i, j in zip(self.position, movement))
 
     def _hypotenuse(self, other_pos):
@@ -180,59 +193,53 @@ class Particle:
 
         if left_button and not self.clicked:
             self.clicked = True
-            self._handle_movement(random.SystemRandom().sample(range(-repel_dist, repel_dist), 2), 10)
+            self._handle_movement(random.sample(range(-repel_dist, repel_dist), 2), 10)
         elif right_button and not self.clicked:
             self.clicked = True
-            speed = random.SystemRandom().randint(1, 500)
-            barrier_dist = random.SystemRandom().randint(1, 300)
-            repel_dist = random.SystemRandom().randint(1, 500)
-            repel_multiplier = random.SystemRandom().randint(1, 20)
-        elif not left_button and not right_button:
+            speed = random.randint(1, 500)
+            barrier_dist = random.randint(1, 300)
+            repel_dist = random.randint(1, 500)
+            repel_multiplier = random.randint(1, 50)
+        elif not right_button:
             self.clicked = False
 
         if magnitude < barrier_dist:
-            self._handle_movement(random.SystemRandom().sample(range(-repel_dist, repel_dist), 2), repel_multiplier)
+            self._handle_movement(random.sample(range(-repel_dist, repel_dist), 2), repel_multiplier)
         else:
             self._handle_movement(movement, speed)
 
     def update(self):
-        self.surface.fill(self.bg_color)
         self.rect.center = self.position
 
     def draw(self, screen):
         self.update()
         center = (self.position[0] - self.size[0] / 2, self.position[1] - self.size[1] / 2)
         screen.blit(self.surface, center)
-        #pg.draw.rect(screen, self.fg_color, self.rect)
 
     @classmethod
     def create(cls, amount=0):
         for i in range(amount):
-            size = random.SystemRandom().sample(range(1, 5), 2)
-            position = random.SystemRandom().sample(range(0, 1000), 2)
-            color = random.SystemRandom().sample(range(0, 255), 3)
-            args = {
+            size = random.sample(range(1, 5), 2)
+            position = random.sample(range(0, 1000), 2)
+            color = random.sample(range(0, 255), 3)
+            kwargs = {
                 "size": size,
                 "position": position,
                 "bg_color": color
             }
-            cls(**args)
+            cls(**kwargs)
 
     @classmethod
     def group_draw(cls, screen):
-        for particle in cls.all_particles:
-            particle.draw(screen)
+        [particle.draw(screen) for particle in cls.all_particles]
 
     @classmethod
     def group_events(cls):
-        for particle in cls.all_particles:
-            particle.handle_events()
+        [particle.handle_events() for particle in cls.all_particles]
 
     @classmethod
     def group_collision(cls, other_rects):
-        for particle in cls.all_particles:
-            particle.handle_collision(other_rects)
-
+        [particle.handle_collision(other_rects) for particle in cls.all_particles]
 
 
 class Game:
