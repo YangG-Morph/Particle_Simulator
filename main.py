@@ -75,6 +75,11 @@ barrier_dist = 4
 repel_dist = 130
 repel_multiplier = 4
 
+--- Sucked in ---
+speed = 8
+barrier_dist = 10
+repel_dist = 359
+repel_multiplier = 2
 """
 speed = 5
 barrier_dist = 40
