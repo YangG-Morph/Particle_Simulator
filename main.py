@@ -111,7 +111,7 @@ repel_dist = 50
 repel_multiplier = 20
 
 MAX_PARTICLES = 5_000
-SCREEN_SIZE = (750, 750)
+SCREEN_SIZE = (1250, 750)
 
 class Text:
     all_text = []
@@ -301,7 +301,7 @@ class Game:
 
 if __name__ == '__main__':
     pg.init()
-    display = pg.display.set_mode(SCREEN_SIZE, flags=0)
+    display = pg.display.set_mode(SCREEN_SIZE, flags=pg.RESIZABLE)
     pg.display.set_caption("Particle Simulator")
 
     Game(display).run()
