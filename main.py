@@ -104,7 +104,7 @@ barrier_dist = 40
 repel_dist = 50
 repel_multiplier = 20
 
-MAX_PARTICLES = 5000
+MAX_PARTICLES = 10000
 SCREEN_SIZE = (750, 750)
 
 class Text:
@@ -174,13 +174,12 @@ class Particle:
                 pass  # self.position = (self.position[0], other_rect.y - self.rect.height)
 
     def _handle_movement(self, movement, multiplier=1):
-        """ TODO this function lags?"""
         if multiplier > 1:
-            movement = (i * multiplier for i in movement)
-        self.position = tuple(i + j for i, j in zip(self.position, movement))
+            movement = (movement[0] * multiplier, movement[1] * multiplier)
+        self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
 
     def _hypotenuse(self, other_pos):
-        self.a, self.b = tuple(i - j for i, j in zip(other_pos, self.position))
+        self.a, self.b = other_pos[0] - self.position[0], other_pos[1] - self.position[1]
         return (self.a ** 2 + self.b ** 2) ** 0.5
 
     def _normalize(self, magnitude):
@@ -286,7 +285,7 @@ if __name__ == '__main__':
     pg.init()
     display = pg.display.set_mode(SCREEN_SIZE, flags=0)
     pg.display.set_caption("Particle Simulator")
-    
+
     Game(display).run()
 
 
