@@ -179,8 +179,8 @@ class Particle:
             if self.rect.colliderect(other_rect):
                 pass  # self.position = (self.position[0], other_rect.y - self.rect.height)
 
-    def _handle_movement(self, movement, multiplier=1):
-        if multiplier > 1:
+    def _handle_movement(self, movement, multiplier=None):
+        if multiplier is not None:
             movement = (movement[0] * multiplier, movement[1] * multiplier)
         self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
 
@@ -239,7 +239,8 @@ class Particle:
     def draw(self, screen):
         self.update()
         screen.blit(self.surface, self.rect.topleft)
-        # pg.draw.rect(screen, self.fg_color, self.rect)
+        #pg.draw.rect(screen, self.bg_color, self.rect)
+        #pg.draw.circle(screen, self.bg_color, self.rect.center, self.size[0])
 
     @classmethod
     def create(cls, amount=0):
