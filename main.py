@@ -99,10 +99,10 @@ barrier_dist = 267
 repel_dist = 61
 repel_multiplier = 5
 """
-speed = 350
-barrier_dist = 330
-repel_dist = 1
-repel_multiplier = 200
+speed = 5
+barrier_dist = 40
+repel_dist = 50
+repel_multiplier = 20
 
 MAX_PARTICLES = 5000
 SCREEN_SIZE = (750, 750)
