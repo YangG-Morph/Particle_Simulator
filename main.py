@@ -51,7 +51,7 @@ barrier_dist = 330
 repel_dist = 1
 repel_multiplier = 200
 
---- Snow flake ---
+--- Snowflake ---
 speed = 18
 barrier_dist = 10
 repel_dist = 1
@@ -196,6 +196,11 @@ class Particle:
 
     @staticmethod
     def _random(min, max, counts=1, as_int=False):
+        if True:
+            if counts > 1:
+                return [random.randint(min, max) for i in range(counts)]
+            return random.randint(min, max)
+
         if counts > 1 and not as_int:
             return [random.uniform(min, max) for i in range(counts)]
         elif counts > 1 and as_int:
