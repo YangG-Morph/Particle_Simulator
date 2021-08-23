@@ -285,7 +285,8 @@ class Game:
 if __name__ == '__main__':
     pg.init()
     display = pg.display.set_mode(SCREEN_SIZE, flags=0)
-
+    pg.display.set_caption("Particle Simulator")
+    
     Game(display).run()
 
 
