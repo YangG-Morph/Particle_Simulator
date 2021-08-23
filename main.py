@@ -1,7 +1,6 @@
 import random
 import pygame as pg
 import sys
-import numpy as np
 
 """ 
 --- Jello ---
@@ -34,7 +33,7 @@ barrier_dist = 100
 repel_dist = 400
 repel_multiplier = 20
 
---- Grouped ---
+--- Swarm ---
 speed = 407
 barrier_dist = 273
 repel_dist = 3
@@ -46,7 +45,7 @@ barrier_dist = 330
 repel_dist = 1
 repel_multiplier = 20
 
---- Trees ---
+--- Dancing stars ---
 speed = 350
 barrier_dist = 330
 repel_dist = 1
@@ -58,11 +57,11 @@ barrier_dist = 1
 repel_dist = 288
 repel_multiplier = 20
 
---- Three X's ---
+--- Snow flake ---
 speed = 18
 barrier_dist = 10
 repel_dist = 1
-repel_multiplier = 20
+repel_multiplier = 50
 
 --- Magic square ---
 speed = 10
@@ -87,15 +86,26 @@ speed = 8
 barrier_dist = 10
 repel_dist = 359
 repel_multiplier = 2
+
+--- Disco ball ---
+speed = 179
+barrier_dist = 88
+repel_dist = 5
+repel_multiplier = 2
+
+--- Huge planet ---
+speed = 34
+barrier_dist = 267
+repel_dist = 61
+repel_multiplier = 5
 """
-speed = 5
-barrier_dist = 40
-repel_dist = 50
-repel_multiplier = 20
+speed = 350
+barrier_dist = 330
+repel_dist = 1
+repel_multiplier = 200
 
 MAX_PARTICLES = 5000
 SCREEN_SIZE = (750, 750)
-
 
 class Text:
     all_text = []
@@ -128,6 +138,7 @@ class Text:
                 self.position = (0, i * self.rendered_text.get_height() + margin_y)
                 self.prev_value = text_values[i]
                 self.rendered_text = self.font.render(f"{self.orig_text}{text_values[i]}", True, self.color)
+                break
 
     def draw(self, screen):
         self.update()
