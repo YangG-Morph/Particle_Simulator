@@ -98,13 +98,19 @@ speed = 34
 barrier_dist = 267
 repel_dist = 61
 repel_multiplier = 5
+
+--- Butterflies ---
+speed = 21
+barrier_dist = 118
+repel_dist = 1
+repel_multiplier = 2
 """
 speed = 5
 barrier_dist = 40
 repel_dist = 50
 repel_multiplier = 20
 
-MAX_PARTICLES = 5000
+MAX_PARTICLES = 10_000
 SCREEN_SIZE = (750, 750)
 
 class Text:
