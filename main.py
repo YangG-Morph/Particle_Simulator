@@ -51,17 +51,17 @@ barrier_dist = 330
 repel_dist = 1
 repel_multiplier = 200
 
---- Crystal ball ---
-speed = 150
-barrier_dist = 1
-repel_dist = 288
-repel_multiplier = 20
-
 --- Snow flake ---
 speed = 18
 barrier_dist = 10
 repel_dist = 1
 repel_multiplier = 50
+
+--- Crystal ball ---
+speed = 150
+barrier_dist = 1
+repel_dist = 288
+repel_multiplier = 20
 
 --- Magic square ---
 speed = 10
@@ -110,7 +110,7 @@ barrier_dist = 40
 repel_dist = 50
 repel_multiplier = 20
 
-MAX_PARTICLES = 10_000
+MAX_PARTICLES = 5_000
 SCREEN_SIZE = (750, 750)
 
 class Text:
@@ -194,8 +194,16 @@ class Particle:
             normalized = (self.a / magnitude, self.b / magnitude)
         return normalized
 
-    def _random(self, min, max):
-        return random.uniform(min, max)
+    @staticmethod
+    def _random(min, max, counts=1, as_int=False):
+        if counts > 1 and not as_int:
+            return [random.uniform(min, max) for i in range(counts)]
+        elif counts > 1 and as_int:
+            return [int(random.uniform(min, max)) for i in range(counts)]
+        elif as_int:
+            return int(random.uniform(min, max))
+        else:
+            return random.uniform(min, max)
 
     def handle_events(self, mouse_pos, mouse_pressed):
         global speed
@@ -208,19 +216,19 @@ class Particle:
 
         if left_button and not self.clicked:
             self.clicked = True
-            movement = (random.randint(-repel_dist, repel_dist), random.randint(-repel_dist, repel_dist)) #(self._random(-repel_dist, repel_dist), self._random(-repel_dist, repel_dist))
+            movement = Particle._random(-repel_dist, repel_dist, counts=2)
             self._handle_movement(movement, 10)
         elif right_button and not self.clicked:
             self.clicked = True
-            speed = random.randint(1, 500)
-            barrier_dist = random.randint(1, 300)
-            repel_dist = random.randint(1, 500)
-            repel_multiplier = random.randint(1, 50)
+            speed = Particle._random(0, 500, as_int=True)
+            barrier_dist = Particle._random(0, 300, as_int=True)
+            repel_dist = Particle._random(0, 500, as_int=True)
+            repel_multiplier = Particle._random(0, 50, as_int=True)
         elif not right_button:
             self.clicked = False
 
         if magnitude < barrier_dist:
-            movement = (random.randint(-repel_dist, repel_dist), random.randint(-repel_dist, repel_dist)) #(self._random(-repel_dist, repel_dist), self._random(-repel_dist, repel_dist))
+            movement = Particle._random(-repel_dist, repel_dist, counts=2)
             self._handle_movement(movement, repel_multiplier)
         else:
             self._handle_movement(self._normalize(magnitude), speed)
@@ -236,9 +244,9 @@ class Particle:
     @classmethod
     def create(cls, amount=0):
         for i in range(amount):
-            size = random.sample(range(1, 5), 2)
-            position = random.sample(range(0, 1000), 2)
-            color = random.sample(range(0, 255), 3)
+            size = Particle._random(1, 5, counts=2, as_int=True)
+            position = Particle._random(0, 1000, counts=2, as_int=True)
+            color = Particle._random(0, 255, counts=3, as_int=True)
             kwargs = {
                 "size": size,
                 "position": position,
