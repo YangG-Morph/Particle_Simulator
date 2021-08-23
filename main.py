@@ -104,7 +104,7 @@ barrier_dist = 40
 repel_dist = 50
 repel_multiplier = 20
 
-MAX_PARTICLES = 10000
+MAX_PARTICLES = 5000
 SCREEN_SIZE = (750, 750)
 
 class Text:
@@ -188,6 +188,9 @@ class Particle:
             normalized = (self.a / magnitude, self.b / magnitude)
         return normalized
 
+    def _random(self, min, max):
+        return random.uniform(min, max)
+
     def handle_events(self, mouse_pos, mouse_pressed):
         global speed
         global barrier_dist
@@ -199,7 +202,7 @@ class Particle:
 
         if left_button and not self.clicked:
             self.clicked = True
-            movement = (random.randint(-repel_dist, repel_dist), random.randint(-repel_dist, repel_dist))
+            movement = (random.randint(-repel_dist, repel_dist), random.randint(-repel_dist, repel_dist)) #(self._random(-repel_dist, repel_dist), self._random(-repel_dist, repel_dist))
             self._handle_movement(movement, 10)
         elif right_button and not self.clicked:
             self.clicked = True
@@ -211,7 +214,7 @@ class Particle:
             self.clicked = False
 
         if magnitude < barrier_dist:
-            movement = (random.randint(-repel_dist, repel_dist), random.randint(-repel_dist, repel_dist))
+            movement = (random.randint(-repel_dist, repel_dist), random.randint(-repel_dist, repel_dist)) #(self._random(-repel_dist, repel_dist), self._random(-repel_dist, repel_dist))
             self._handle_movement(movement, repel_multiplier)
         else:
             self._handle_movement(self._normalize(magnitude), speed)
