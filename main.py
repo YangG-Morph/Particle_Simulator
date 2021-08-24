@@ -2,6 +2,7 @@ import random
 import pygame as pg
 import sys
 
+
 """ 
 --- Jello ---
 speed = 5
@@ -105,13 +106,14 @@ barrier_dist = 118
 repel_dist = 1
 repel_multiplier = 2
 """
-speed = 5
-barrier_dist = 40
-repel_dist = 50
-repel_multiplier = 20
+speed = 350
+barrier_dist = 330
+repel_dist = 1
+repel_multiplier = 200
 
 MAX_PARTICLES = 5_000
 SCREEN_SIZE = (1250, 750)
+
 
 class Text:
     all_text = []
@@ -154,6 +156,7 @@ class Text:
     def group_draw(cls, screen):
         [text.draw(screen) for text in cls.all_text]
 
+
 class Particle:
     all_particles = []
 
@@ -180,35 +183,34 @@ class Particle:
                 pass  # self.position = (self.position[0], other_rect.y - self.rect.height)
 
     def _handle_movement(self, movement, multiplier=None):
-        if multiplier is not None:
+        if multiplier:
             movement = (movement[0] * multiplier, movement[1] * multiplier)
-        self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
+            self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
 
-    def _hypotenuse(self, other_pos):
+    def _hypotenuse(self, other_pos):  # TODO use C version instead
         self.a, self.b = other_pos[0] - self.position[0], other_pos[1] - self.position[1]
         return (self.a ** 2 + self.b ** 2) ** 0.5
 
-    def _normalize(self, magnitude):
+    def _normalize(self, magnitude):  # TODO use C version instead
         normalized = (0, 0)
         if magnitude > 0:
             normalized = (self.a / magnitude, self.b / magnitude)
         return normalized
 
     @staticmethod
-    def _random(min, max, counts=1, as_int=False):
+    def _random(min, max, counts=1, as_int=False):  # TODO random.random() instead?
         if True:
             if counts > 1:
                 return [random.randint(min, max) for i in range(counts)]
             return random.randint(min, max)
-
-        if counts > 1 and not as_int:
+        """ random.uniform is faster but produces different results """
+        if counts > 1:
+            if as_int:
+                return [int(random.uniform(min, max)) for i in range(counts)]
             return [random.uniform(min, max) for i in range(counts)]
-        elif counts > 1 and as_int:
-            return [int(random.uniform(min, max)) for i in range(counts)]
         elif as_int:
             return int(random.uniform(min, max))
-        else:
-            return random.uniform(min, max)
+        return random.uniform(min, max)
 
     def handle_events(self, mouse_pos, mouse_pressed):
         global speed
@@ -244,8 +246,8 @@ class Particle:
     def draw(self, screen):
         self.update()
         screen.blit(self.surface, self.rect.topleft)
-        #pg.draw.rect(screen, self.bg_color, self.rect)
-        #pg.draw.circle(screen, self.bg_color, self.rect.center, self.size[0])
+        # pg.draw.rect(screen, self.bg_color, self.rect)
+        # pg.draw.circle(screen, self.bg_color, self.rect.center, self.size[0])
 
     @classmethod
     def create(cls, amount=0):
@@ -306,9 +308,7 @@ class Game:
 
 if __name__ == '__main__':
     pg.init()
-    display = pg.display.set_mode(SCREEN_SIZE, flags=pg.RESIZABLE)
+    display = pg.display.set_mode(SCREEN_SIZE, flags=pg.RESIZABLE | pg.DOUBLEBUF)
     pg.display.set_caption("Particle Simulator")
 
     Game(display).run()
-
-
