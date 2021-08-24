@@ -6,7 +6,9 @@ Simulates particles moving towards the mouse.
 
 
 
-Has some predefined settings for reference at the top. Left click to deflect particles and right click to randomize settings.
+Has some predefined settings for reference at the top. 
+
+Left click to deflect particles, middle click to randomize settings and right click on settings to activate sliders.
 
 * 10,000 Particles gets around 20-30 fps
 
