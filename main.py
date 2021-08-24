@@ -196,8 +196,11 @@ class Slider:
         self.fg_rect = pg.Rect(self.position, (max_width, size[1]))
 
     def update(self, width):
-        if width is not None and width <= self.max_width:
-            self.fg_rect.update(self.position, (width, self.size[1]))
+        if width is not None:
+            if self.max_width >= width >= 0:
+                self.fg_rect.update(self.position, (width, self.size[1]))
+            elif width > self.max_width:
+                self.fg_rect.update(self.position, (self.max_width, self.size[1]))
 
     def draw(self, surface):
         pg.draw.rect(surface, self.bg_color, self.bg_rect)
@@ -210,7 +213,14 @@ class Text:
     padding_y = 1
     clicked = False
 
-    def __init__(self, name="", text="", bg_color=pg.Color("black"), fg_color=pg.Color("white"), collision_ignore=False):
+    def __init__(self,
+                 name="",
+                 text="",
+                 bg_color=pg.Color("black"),
+                 fg_color=pg.Color("white"),
+                 collision_ignore=False,
+                 max_width=500,
+                 ):
         self.orig_text = text
         self.bg_color = bg_color
         self.fg_color = fg_color
@@ -222,6 +232,7 @@ class Text:
         #self.prev_value = None
         self.collided = False
         self.prev_collided = False
+        self.max_width = max_width
         self.collision_ignore = collision_ignore
         self.__class__.all_text.append(self)
         self.index = Text.all_text.index(self)
@@ -235,7 +246,7 @@ class Text:
         self.slider = Slider(
             self.position,
             (self.rendered_text.get_width(), self.rendered_text.get_height()),
-            max_width=300,
+            max_width=max_width,
             bg_color=pg.Color("white"),
             fg_color=pg.Color("red"),
         )
@@ -413,10 +424,10 @@ class Game:
         self.bg_color = pg.Color("black")
         Particle.create(MAX_PARTICLES)
         self.settings = Settings()
-        self.speed_text = Text("speed", "Speed: ", bg_color=self.bg_color)
-        self.barrier_text = Text("barrier_dist", "Barrier distance: ", bg_color=self.bg_color)
-        self.repel_text = Text("repel_dist", "Repel distance: ", bg_color=self.bg_color)
-        self.repel_mult_text = Text("repel_multiplier", "Repel multiplier: ", bg_color=self.bg_color)
+        self.speed_text = Text("speed", "Speed: ", bg_color=self.bg_color, max_width=MAX_SPEED)
+        self.barrier_text = Text("barrier_dist", "Barrier distance: ", bg_color=self.bg_color, max_width=MAX_BARRIER_DIST)
+        self.repel_text = Text("repel_dist", "Repel distance: ", bg_color=self.bg_color, max_width=MAX_REPEL_DIST)
+        self.repel_mult_text = Text("repel_multiplier", "Repel multiplier: ", bg_color=self.bg_color, max_width=MAX_REPEL_MULTIPLIER)
         self.fps_text = Text(text="FPS: ", bg_color=self.bg_color, collision_ignore=True)
 
     def handle_quit(self):
