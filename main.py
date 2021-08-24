@@ -111,8 +111,15 @@ repel_dist = 2
 repel_multiplier = 5
 """
 
+""" Constants """
 MAX_PARTICLES = 5_000
 SCREEN_SIZE = (1250, 750)
+FPS = 60
+
+MAX_SPEED = 500
+MAX_BARRIER_DIST = 300
+MAX_REPEL_DIST = 500
+MAX_REPEL_MULTIPLIER = 200
 
 class Settings:
     def __init__(self):
@@ -127,6 +134,10 @@ class Settings:
 
     @speed.setter
     def speed(self, value):
+        if value < 0:
+            value = 0
+        elif value > MAX_SPEED:
+            value = MAX_SPEED
         self._speed = value
 
     @property
@@ -135,6 +146,10 @@ class Settings:
 
     @barrier_dist.setter
     def barrier_dist(self, value):
+        if value < 0:
+            value = 0
+        elif value > MAX_BARRIER_DIST:
+            value = MAX_BARRIER_DIST
         self._barrier_dist = value
 
     @property
@@ -143,6 +158,10 @@ class Settings:
 
     @repel_dist.setter
     def repel_dist(self, value):
+        if value < 0:
+            value = 0
+        elif value > MAX_REPEL_DIST:
+            value = MAX_REPEL_DIST
         self._repel_dist = value
 
     @property
@@ -151,43 +170,126 @@ class Settings:
 
     @repel_multiplier.setter
     def repel_multiplier(self, value):
+        if value < 0:
+            value = 0
+        elif value > MAX_REPEL_MULTIPLIER:
+            value = MAX_REPEL_MULTIPLIER
         self._repel_multiplier = value
+
+
+class Slider:
+    def __init__(self,
+                 position=(0, 0),
+                 size=(1, 5),
+                 bg_color=pg.Color("black"),
+                 fg_color=pg.Color("white"),
+                 max_width=500,
+                 ):
+        self.position = position
+        self.size = size
+        self.bg_color = bg_color
+        self.fg_color = fg_color
+        self.start_pos = self.position
+        self.max_width = max_width
+        self.collision_rect = pg.Rect(self.position, (size[0], size[1]))
+        self.bg_rect = pg.Rect(self.position, (max_width, size[1]))
+        self.fg_rect = pg.Rect(self.position, (max_width, size[1]))
+
+    def update(self, width):
+        if width is not None and width <= self.max_width:
+            self.fg_rect.update(self.position, (width, self.size[1]))
+
+    def draw(self, surface):
+        pg.draw.rect(surface, self.bg_color, self.bg_rect)
+        pg.draw.rect(surface, self.fg_color, self.fg_rect)
+
 
 class Text:
     all_text = []
     margin_y = 3
+    padding_y = 1
+    clicked = False
 
-    def __init__(self, name="", text="", color=pg.Color("white")):
+    def __init__(self, name="", text="", bg_color=pg.Color("black"), fg_color=pg.Color("white"), collision_ignore=False):
         self.orig_text = text
-        self.color = color
+        self.bg_color = bg_color
+        self.fg_color = fg_color
         self.name = name
-        self.rendered_text = pg.font.SysFont("Calibri", 24).render(f"{self.orig_text}", True, self.color)
+        self.rendered_text = pg.font.SysFont("Calibri", 24).render(f"{self.orig_text}", True, self.fg_color)
         self.prev_value = self.rendered_text
-        self.position = (0, 0)
         self.font = pg.font.SysFont("Calibri", 24)
         self.value = None
+        #self.prev_value = None
+        self.collided = False
+        self.prev_collided = False
+        self.collision_ignore = collision_ignore
         self.__class__.all_text.append(self)
+        self.index = Text.all_text.index(self)
+        self.position = (
+            0,
+            Text.all_text.index(self) *
+            self.rendered_text.get_height() +
+            self.margin_y +
+            (self.index * self.padding_y)
+        )
+        self.slider = Slider(
+            self.position,
+            (self.rendered_text.get_width(), self.rendered_text.get_height()),
+            max_width=300,
+            bg_color=pg.Color("white"),
+            fg_color=pg.Color("red"),
+        )
+
+    def handle_events(self, mouse_pos, mouse_pressed, settings):
+        _,_,right_button = mouse_pressed
+        self.collided = self.slider.collision_rect.collidepoint(mouse_pos)
+
+        if not self.collision_ignore and right_button and self.collided and not self.__class__.clicked:
+            self.__class__.clicked = True
+            self.prev_collided = True
+            self.slider.start_pos = mouse_pos
+            self.value = getattr(settings, self.name)
+            self.slider.update(self.value)
+        elif right_button and self.prev_collided:
+            self.prev_collided = True
+            self.value = (mouse_pos[0] - self.slider.start_pos[0]) + (self.slider.start_pos[1] - mouse_pos[1])  # TODO Always starts at 0
+            setattr(settings, self.name, self.value)
+            self.slider.update(self.value)
+            self.position = (self.slider.max_width, self.position[1])
+        elif not right_button:
+            self.__class__.clicked = False
+            self.prev_collided = False
+            self.position = (0, self.position[1])
 
     def update(self):
         if self.prev_value != self.value:
-            self.position = (0, Text.all_text.index(self) * self.rendered_text.get_height() + self.margin_y)
             self.prev_value = self.value
-            self.rendered_text = self.font.render(f"{self.orig_text}{self.value}", True, self.color)
+            self.rendered_text = self.font.render(f"{self.orig_text}{self.value}", True, self.fg_color)
 
-    def draw(self, screen):
+            size = (self.rendered_text.get_width(), self.rendered_text.get_height())
+            self.slider.collision_rect.update(self.slider.collision_rect.topleft, size)
+            self.slider.update(self.value)
+
+    def draw(self, surface):
         self.update()
-        screen.blit(self.rendered_text, self.position)
+        surface.blit(self.rendered_text, self.position)
+        if self.__class__.clicked and self.prev_collided and not self.collision_ignore:
+            self.slider.draw(surface)
 
     def set_value(self, value):
         self.value = value
 
     @classmethod
-    def set_values(cls, settings):
-        [cls.all_text[i].set_value(settings.__getattribute__(cls.all_text[i].name)) for i in range(len((cls.all_text)) - 1)]
+    def group_events(cls, mouse_pos, mouse_pressed, settings):
+        [text.handle_events(mouse_pos, mouse_pressed, settings) for text in cls.all_text]
 
     @classmethod
-    def group_draw(cls, screen):
-        [text.draw(screen) for text in cls.all_text]
+    def group_draw(cls, surface):
+        [text.draw(surface) for text in cls.all_text]
+
+    @classmethod
+    def set_values(cls, settings):
+        [cls.all_text[i].set_value(getattr(settings, cls.all_text[i].name)) for i in range(len(cls.all_text) - 1)]
 
 
 class Particle:
@@ -246,20 +348,20 @@ class Particle:
         return random.uniform(min, max)
 
     def handle_events(self, mouse_pos, mouse_pressed, settings):
-        left_button, _, right_button = mouse_pressed
+        left_button, middle_button,_ = mouse_pressed
         magnitude = self._hypotenuse(mouse_pos)
 
         if left_button and not self.clicked:
             self.clicked = True
             movement = Particle._random(-settings.repel_dist, settings.repel_dist, counts=2)
             self._handle_movement(movement, 10)
-        elif right_button and not self.clicked:
+        elif middle_button and not self.clicked:
             self.clicked = True
-            settings.speed = Particle._random(0, 500, as_int=True)
-            settings.barrier_dist = Particle._random(0, 300, as_int=True)
-            settings.repel_dist = Particle._random(0, 500, as_int=True)
-            settings.repel_multiplier = Particle._random(0, 50, as_int=True)
-        elif not right_button:
+            settings.speed = Particle._random(0, MAX_SPEED, as_int=True)
+            settings.barrier_dist = Particle._random(0, MAX_BARRIER_DIST, as_int=True)
+            settings.repel_dist = Particle._random(0, MAX_REPEL_DIST, as_int=True)
+            settings.repel_multiplier = Particle._random(0, MAX_REPEL_MULTIPLIER, as_int=True)
+        elif not middle_button:
             self.clicked = False
 
         if magnitude < settings.barrier_dist:
@@ -271,14 +373,11 @@ class Particle:
     def update(self):
         self.rect.center = self.position
 
-    def draw(self, screen):
+    def draw(self, surface):
         self.update()
-        screen.blit(self.surface, self.rect.topleft)
-        # pg.draw.rect(screen, self.bg_color, self.rect)
-        # pg.draw.circle(screen, self.bg_color, self.rect.center, self.size[0])
-
-    def set_value(self, value):
-        pass
+        surface.blit(self.surface, self.rect.topleft)
+        # pg.draw.rect(surface, self.bg_color, self.rect)
+        # pg.draw.circle(surface, self.bg_color, self.rect.center, self.size[0])
 
     @classmethod
     def create(cls, amount=0):
@@ -294,8 +393,8 @@ class Particle:
             cls(**kwargs)
 
     @classmethod
-    def group_draw(cls, screen):
-        [particle.draw(screen) for particle in cls.all_particles]
+    def group_draw(cls, surface):
+        [particle.draw(surface) for particle in cls.all_particles]
 
     @classmethod
     def group_events(cls, mouse_pos, mouse_pressed, settings):
@@ -311,27 +410,31 @@ class Game:
         self.screen = screen
         self.running = True
         self.clock = pg.time.Clock()
+        self.bg_color = pg.Color("black")
         Particle.create(MAX_PARTICLES)
         self.settings = Settings()
-        self.speed_text = Text("speed", "Speed: ")
-        self.barrier_text = Text("barrier_dist", "Barrier distance: ")
-        self.repel_text = Text("repel_dist", "Repel distance: ")
-        self.repel_mult_text = Text("repel_multiplier", "Repel multiplier: ")
-        self.fps_text = Text(text="FPS: ")
+        self.speed_text = Text("speed", "Speed: ", bg_color=self.bg_color)
+        self.barrier_text = Text("barrier_dist", "Barrier distance: ", bg_color=self.bg_color)
+        self.repel_text = Text("repel_dist", "Repel distance: ", bg_color=self.bg_color)
+        self.repel_mult_text = Text("repel_multiplier", "Repel multiplier: ", bg_color=self.bg_color)
+        self.fps_text = Text(text="FPS: ", bg_color=self.bg_color, collision_ignore=True)
+
+    def handle_quit(self):
+        for event in pg.event.get():
+            if event.type in [pg.QUIT] or event.type in [pg.KEYDOWN] and event.key in [pg.K_ESCAPE]:
+                pg.quit()
+                sys.exit()
 
     def run(self):
-        FPS = 60
-
         while self.running:
-            self.screen.fill("black")
-            for event in pg.event.get():
-                if event.type in [pg.QUIT]:
-                    pg.quit()
-                    sys.exit()
+            self.handle_quit()
+            self.screen.fill(self.bg_color)
 
             Particle.group_events(pg.mouse.get_pos(), pg.mouse.get_pressed(), self.settings)
             Particle.group_draw(self.screen)
+
             Text.set_values(self.settings)
+            Text.group_events(pg.mouse.get_pos(), pg.mouse.get_pressed(), self.settings)
             Text.group_draw(self.screen)
 
             self.clock.tick(FPS)
@@ -345,6 +448,3 @@ if __name__ == '__main__':
     pg.display.set_caption("Particle Simulator")
 
     Game(display).run()
-
-
-
