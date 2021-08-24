@@ -1,7 +1,5 @@
-import random
+import math, random, sys
 import pygame as pg
-import sys
-
 
 """ 
 --- Jello ---
@@ -46,13 +44,13 @@ barrier_dist = 330
 repel_dist = 1
 repel_multiplier = 20
 
---- Dancing stars ---
+--- Dancing stars (randint)---
 speed = 350
 barrier_dist = 330
 repel_dist = 1
 repel_multiplier = 200
 
---- Snowflake ---
+--- Snowflake (randint)---
 speed = 18
 barrier_dist = 10
 repel_dist = 1
@@ -105,52 +103,87 @@ speed = 21
 barrier_dist = 118
 repel_dist = 1
 repel_multiplier = 2
+
+--- School of fish (random.uniform) ---
+speed = 392
+barrier_dist = 284
+repel_dist = 2
+repel_multiplier = 5
 """
-speed = 350
-barrier_dist = 330
-repel_dist = 1
-repel_multiplier = 200
 
 MAX_PARTICLES = 5_000
 SCREEN_SIZE = (1250, 750)
 
+class Settings:
+    def __init__(self):
+        self._speed = 350
+        self._barrier_dist = 330
+        self._repel_dist = 1
+        self._repel_multiplier = 200
+
+    @property
+    def speed(self):
+        return self._speed
+
+    @speed.setter
+    def speed(self, value):
+        self._speed = value
+
+    @property
+    def barrier_dist(self):
+        return self._barrier_dist
+
+    @barrier_dist.setter
+    def barrier_dist(self, value):
+        self._barrier_dist = value
+
+    @property
+    def repel_dist(self):
+        return self._repel_dist
+
+    @repel_dist.setter
+    def repel_dist(self, value):
+        self._repel_dist = value
+
+    @property
+    def repel_multiplier(self):
+        return self._repel_multiplier
+
+    @repel_multiplier.setter
+    def repel_multiplier(self, value):
+        self._repel_multiplier = value
 
 class Text:
     all_text = []
+    margin_y = 3
 
-    def __init__(self, text="", color=pg.Color("white")):
+    def __init__(self, name="", text="", color=pg.Color("white")):
         self.orig_text = text
         self.color = color
+        self.name = name
         self.rendered_text = pg.font.SysFont("Calibri", 24).render(f"{self.orig_text}", True, self.color)
         self.prev_value = self.rendered_text
         self.position = (0, 0)
         self.font = pg.font.SysFont("Calibri", 24)
+        self.value = None
         self.__class__.all_text.append(self)
 
     def update(self):
-        global speed
-        global barrier_dist
-        global repel_dist
-        global repel_multiplier
-
-        margin_y = 3
-        text_values = [speed, barrier_dist, repel_dist, repel_multiplier]
-
-        try:
-            text_values.append(self.fps)
-        except AttributeError:
-            text_values.append(None)
-
-        for i, text in enumerate(self.__class__.all_text):
-            if text == self and self.prev_value != text_values[i]:
-                self.position = (0, i * self.rendered_text.get_height() + margin_y)
-                self.prev_value = text_values[i]
-                self.rendered_text = self.font.render(f"{self.orig_text}{text_values[i]}", True, self.color)
-                break
+        if self.prev_value != self.value:
+            self.position = (0, Text.all_text.index(self) * self.rendered_text.get_height() + self.margin_y)
+            self.prev_value = self.value
+            self.rendered_text = self.font.render(f"{self.orig_text}{self.value}", True, self.color)
 
     def draw(self, screen):
         self.update()
         screen.blit(self.rendered_text, self.position)
+
+    def set_value(self, value):
+        self.value = value
+
+    @classmethod
+    def set_values(cls, settings):
+        [cls.all_text[i].set_value(settings.__getattribute__(cls.all_text[i].name)) for i in range(len((cls.all_text)) - 1)]
 
     @classmethod
     def group_draw(cls, screen):
@@ -187,19 +220,19 @@ class Particle:
             movement = (movement[0] * multiplier, movement[1] * multiplier)
             self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
 
-    def _hypotenuse(self, other_pos):  # TODO use C version instead
+    def _hypotenuse(self, other_pos):
         self.a, self.b = other_pos[0] - self.position[0], other_pos[1] - self.position[1]
-        return (self.a ** 2 + self.b ** 2) ** 0.5
+        return math.hypot(self.a, self.b)
 
-    def _normalize(self, magnitude):  # TODO use C version instead
-        normalized = (0, 0)
+    def _normalize(self, magnitude):
         if magnitude > 0:
             normalized = (self.a / magnitude, self.b / magnitude)
-        return normalized
+            return normalized
+        return 0, 0
 
     @staticmethod
     def _random(min, max, counts=1, as_int=False):  # TODO random.random() instead?
-        if True:
+        if False:
             if counts > 1:
                 return [random.randint(min, max) for i in range(counts)]
             return random.randint(min, max)
@@ -212,33 +245,28 @@ class Particle:
             return int(random.uniform(min, max))
         return random.uniform(min, max)
 
-    def handle_events(self, mouse_pos, mouse_pressed):
-        global speed
-        global barrier_dist
-        global repel_dist
-        global repel_multiplier
-
+    def handle_events(self, mouse_pos, mouse_pressed, settings):
         left_button, _, right_button = mouse_pressed
         magnitude = self._hypotenuse(mouse_pos)
 
         if left_button and not self.clicked:
             self.clicked = True
-            movement = Particle._random(-repel_dist, repel_dist, counts=2)
+            movement = Particle._random(-settings.repel_dist, settings.repel_dist, counts=2)
             self._handle_movement(movement, 10)
         elif right_button and not self.clicked:
             self.clicked = True
-            speed = Particle._random(0, 500, as_int=True)
-            barrier_dist = Particle._random(0, 300, as_int=True)
-            repel_dist = Particle._random(0, 500, as_int=True)
-            repel_multiplier = Particle._random(0, 50, as_int=True)
+            settings.speed = Particle._random(0, 500, as_int=True)
+            settings.barrier_dist = Particle._random(0, 300, as_int=True)
+            settings.repel_dist = Particle._random(0, 500, as_int=True)
+            settings.repel_multiplier = Particle._random(0, 50, as_int=True)
         elif not right_button:
             self.clicked = False
 
-        if magnitude < barrier_dist:
-            movement = Particle._random(-repel_dist, repel_dist, counts=2)
-            self._handle_movement(movement, repel_multiplier)
+        if magnitude < settings.barrier_dist:
+            movement = Particle._random(-settings.repel_dist, settings.repel_dist, counts=2)
+            self._handle_movement(movement, settings.repel_multiplier)
         else:
-            self._handle_movement(self._normalize(magnitude), speed)
+            self._handle_movement(self._normalize(magnitude), settings.speed)
 
     def update(self):
         self.rect.center = self.position
@@ -248,6 +276,9 @@ class Particle:
         screen.blit(self.surface, self.rect.topleft)
         # pg.draw.rect(screen, self.bg_color, self.rect)
         # pg.draw.circle(screen, self.bg_color, self.rect.center, self.size[0])
+
+    def set_value(self, value):
+        pass
 
     @classmethod
     def create(cls, amount=0):
@@ -267,8 +298,8 @@ class Particle:
         [particle.draw(screen) for particle in cls.all_particles]
 
     @classmethod
-    def group_events(cls, mouse_pos, mouse_pressed):
-        [particle.handle_events(mouse_pos, mouse_pressed) for particle in cls.all_particles]
+    def group_events(cls, mouse_pos, mouse_pressed, settings):
+        [particle.handle_events(mouse_pos, mouse_pressed, settings) for particle in cls.all_particles]
 
     @classmethod
     def group_collision(cls, other_rects):
@@ -281,11 +312,12 @@ class Game:
         self.running = True
         self.clock = pg.time.Clock()
         Particle.create(MAX_PARTICLES)
-        self.speed_text = Text("Speed: ")
-        self.barrier_text = Text("Barrier distance: ")
-        self.repel_text = Text("Repel distance: ")
-        self.repel_mult_text = Text("Repel mult: ")
-        self.fps_text = Text("FPS: ")
+        self.settings = Settings()
+        self.speed_text = Text("speed", "Speed: ")
+        self.barrier_text = Text("barrier_dist", "Barrier distance: ")
+        self.repel_text = Text("repel_dist", "Repel distance: ")
+        self.repel_mult_text = Text("repel_multiplier", "Repel multiplier: ")
+        self.fps_text = Text(text="FPS: ")
 
     def run(self):
         FPS = 60
@@ -297,12 +329,13 @@ class Game:
                     pg.quit()
                     sys.exit()
 
-            Particle.group_events(pg.mouse.get_pos(), pg.mouse.get_pressed())
+            Particle.group_events(pg.mouse.get_pos(), pg.mouse.get_pressed(), self.settings)
             Particle.group_draw(self.screen)
+            Text.set_values(self.settings)
             Text.group_draw(self.screen)
 
             self.clock.tick(FPS)
-            self.fps_text.fps = int(self.clock.get_fps())
+            self.fps_text.set_value(int(self.clock.get_fps()))
             pg.display.update()
 
 
@@ -312,3 +345,6 @@ if __name__ == '__main__':
     pg.display.set_caption("Particle Simulator")
 
     Game(display).run()
+
+
+
