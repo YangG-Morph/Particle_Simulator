@@ -1,6 +1,6 @@
 import math, random, sys
 import pygame as pg
-
+# TEST COMMIT
 """ 
 --- Jello ---
 speed = 5
@@ -203,7 +203,6 @@ class Slider:
                 self.fg_rect.update(self.position, (self.max_width, self.size[1]))
             elif width < 0:
                 self.fg_rect.update(self.position, (0, self.size[1]))
-
 
     def draw(self, surface):
         pg.draw.rect(surface, self.bg_color, self.bg_rect)
