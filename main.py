@@ -7,7 +7,7 @@ SCREEN_SIZE = (1250, 750)
 FPS = 60
 
 MAX_SPEED = 500
-MAX_BARRIER_DIST = 300
+MAX_BARRIER_DIST = 500
 MAX_REPEL_DIST = 500
 MAX_REPEL_MULTIPLIER = 200
 
@@ -137,8 +137,8 @@ class Text:
             self.position,
             (self.rendered_text.get_width(), self.rendered_text.get_height()),
             max_width=max_width,
-            bg_color=pg.Color("darkred"),
-            fg_color=pg.Color("darkgreen"),
+            bg_color=pg.Color("white"),
+            fg_color=pg.Color("darkred"),
         )
 
     def handle_events(self, mouse_pos, mouse_pressed, settings):
