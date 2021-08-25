@@ -21,9 +21,8 @@ class Utils:
         return end_pos[0] - start_pos[0], end_pos[1] - start_pos[1]
 
     @staticmethod
-    def hypotenuse(end_pos, start_pos):
-        a, b = Utils.sub_pos(end_pos, start_pos)
-        return math.hypot(a, b)
+    def hypotenuse(ab):
+        return math.hypot(ab[0], ab[1])
 
     @staticmethod
     def normalize(ab, magnitude):
@@ -215,13 +214,13 @@ class Particle:
         self.surface = pg.Surface(size)
         self.surface.fill(self.bg_color)
         self.clicked = False
-        self.direction = 0, 0
+        #self.direction = 0, 0
         self.__class__.all_particles.append(self)
 
     def handle_collision(self, other_rects):
-        for other_rect in other_rects:
-            if self.rect.colliderect(other_rect):
-                pass  # self.position = (self.position[0], other_rect.y - self.rect.height)
+        for rect in other_rects:
+            if self.rect.colliderect(rect):
+                pass  # self.position =
 
     def _handle_movement(self, movement, multiplier=None):
         if multiplier:
@@ -245,8 +244,8 @@ class Particle:
 
     def handle_events(self, mouse_pos, mouse_pressed, settings):
         left_button, middle_button, _, = mouse_pressed
-        self.direction = Utils.sub_pos(mouse_pos, self.position)
-        magnitude = Utils.hypotenuse(mouse_pos, self.position)
+        direction = Utils.sub_pos(mouse_pos, self.position)
+        magnitude = Utils.hypotenuse(direction)
 
         if left_button and not self.clicked:
             self.clicked = True
@@ -265,7 +264,7 @@ class Particle:
             movement = Particle._random(-settings.repel_dist, settings.repel_dist, counts=2)
             self._handle_movement(movement, settings.repel_multiplier)
         else:
-            self._handle_movement(Utils.normalize(self.direction, magnitude), settings.speed)
+            self._handle_movement(Utils.normalize(direction, magnitude), settings.speed)
 
     def update(self):
         self.rect.center = self.position
@@ -308,13 +307,13 @@ class Game:
         self.running = True
         self.clock = pg.time.Clock()
         self.bg_color = pg.Color("black")
-        Particle.create(MAX_PARTICLES)
         self.settings = Settings()
         self.speed_text = Text("speed", "Speed: ", bg_color=self.bg_color, max_width=MAX_SPEED)
         self.barrier_text = Text("barrier_dist", "Barrier distance: ", bg_color=self.bg_color, max_width=MAX_BARRIER_DIST)
         self.repel_text = Text("repel_dist", "Repel distance: ", bg_color=self.bg_color, max_width=MAX_REPEL_DIST)
         self.repel_mult_text = Text("repel_multiplier", "Repel multiplier: ", bg_color=self.bg_color, max_width=MAX_REPEL_MULTIPLIER)
         self.fps_text = Text(text="FPS: ", bg_color=self.bg_color, collision_ignore=True)
+        Particle.create(MAX_PARTICLES)
 
     def handle_quit(self):
         for event in pg.event.get():
