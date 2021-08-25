@@ -264,7 +264,8 @@ class Text:
             self.slider.update(self.value)
         elif right_button and self.prev_collided:
             self.prev_collided = True
-            self.value = (mouse_pos[0] - self.slider.start_pos[0]) + (self.slider.start_pos[1] - mouse_pos[1]) + self.start_value # TODO Always starts at 0
+            movement = (mouse_pos[0] - self.slider.start_pos[0]) + (self.slider.start_pos[1] - mouse_pos[1])
+            self.value = movement + self.start_value
             setattr(settings, self.name, self.value)
             self.slider.update(self.value)
             self.position = (self.slider.max_width, self.position[1])
