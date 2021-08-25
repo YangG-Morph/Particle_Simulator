@@ -1,6 +1,6 @@
 import math, random, sys
 import pygame as pg
-# TEST COMMIT
+
 """ 
 --- Jello ---
 speed = 5
@@ -176,7 +176,6 @@ class Settings:
             value = MAX_REPEL_MULTIPLIER
         self._repel_multiplier = value
 
-
 class Slider:
     def __init__(self,
                  position=(0, 0),
@@ -208,7 +207,6 @@ class Slider:
         pg.draw.rect(surface, self.bg_color, self.bg_rect)
         pg.draw.rect(surface, self.fg_color, self.fg_rect)
 
-
 class Text:
     all_text = []
     margin_y = 3
@@ -231,7 +229,7 @@ class Text:
         self.prev_value = self.rendered_text
         self.font = pg.font.SysFont("Calibri", 24)
         self.value = None
-        #self.prev_value = None
+        self.start_value = None
         self.collided = False
         self.prev_collided = False
         self.max_width = max_width
@@ -260,12 +258,13 @@ class Text:
         if not self.collision_ignore and right_button and self.collided and not self.__class__.clicked:
             self.__class__.clicked = True
             self.prev_collided = True
-            self.slider.start_pos = mouse_pos
             self.value = getattr(settings, self.name)
+            self.start_value = getattr(settings, self.name)
+            self.slider.start_pos = mouse_pos
             self.slider.update(self.value)
         elif right_button and self.prev_collided:
             self.prev_collided = True
-            self.value = (mouse_pos[0] - self.slider.start_pos[0]) + (self.slider.start_pos[1] - mouse_pos[1])  # TODO Always starts at 0
+            self.value = (mouse_pos[0] - self.slider.start_pos[0]) + (self.slider.start_pos[1] - mouse_pos[1]) + self.start_value # TODO Always starts at 0
             setattr(settings, self.name, self.value)
             self.slider.update(self.value)
             self.position = (self.slider.max_width, self.position[1])
@@ -303,7 +302,6 @@ class Text:
     @classmethod
     def set_values(cls, settings):
         [cls.all_text[i].set_value(getattr(settings, cls.all_text[i].name)) for i in range(len(cls.all_text) - 1)]
-
 
 class Particle:
     all_particles = []
