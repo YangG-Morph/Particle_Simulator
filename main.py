@@ -252,7 +252,7 @@ class Text:
         )
 
     def handle_events(self, mouse_pos, mouse_pressed, settings):
-        _,_,right_button = mouse_pressed
+        _, _, right_button = mouse_pressed
         self.collided = self.slider.collision_rect.collidepoint(mouse_pos)
 
         if not self.collision_ignore and right_button and self.collided and not self.__class__.clicked:
@@ -265,8 +265,8 @@ class Text:
         elif right_button and self.prev_collided:
             self.prev_collided = True
             movement = (mouse_pos[0] - self.slider.start_pos[0]) + (self.slider.start_pos[1] - mouse_pos[1])
-            self.value = movement + self.start_value
-            setattr(settings, self.name, self.value)
+            setattr(settings, self.name, movement + self.start_value)
+            self.value = getattr(settings, self.name)
             self.slider.update(self.value)
             self.position = (self.slider.max_width, self.position[1])
         elif not right_button:
@@ -360,7 +360,7 @@ class Particle:
         return random.uniform(min, max)
 
     def handle_events(self, mouse_pos, mouse_pressed, settings):
-        left_button, middle_button,_ = mouse_pressed
+        left_button, middle_button, _, = mouse_pressed
         magnitude = self._hypotenuse(mouse_pos)
 
         if left_button and not self.clicked:
@@ -442,11 +442,14 @@ class Game:
             self.handle_quit()
             self.screen.fill(self.bg_color)
 
-            Particle.group_events(pg.mouse.get_pos(), pg.mouse.get_pressed(), self.settings)
+            mouse_pos = pg.mouse.get_pos()
+            mouse_buttons = pg.mouse.get_pressed()
+
+            Particle.group_events(mouse_pos, mouse_buttons, self.settings)
             Particle.group_draw(self.screen)
 
             Text.set_values(self.settings)
-            Text.group_events(pg.mouse.get_pos(), pg.mouse.get_pressed(), self.settings)
+            Text.group_events(mouse_pos, mouse_buttons, self.settings)
             Text.group_draw(self.screen)
 
             self.clock.tick(FPS)
