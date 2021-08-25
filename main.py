@@ -30,6 +30,21 @@ class Utils:
             return ab[0] / magnitude, ab[1] / magnitude
         return 0, 0
 
+    @staticmethod
+    def random(min, max, counts=1, as_int=False):  # TODO random.random() instead?
+        if True:
+            if counts > 1:
+                return [random.randint(min, max) for i in range(counts)]
+            return random.randint(min, max)
+        """ random.uniform is faster but produces different results """
+        if counts > 1:
+            if as_int:
+                return [int(random.uniform(min, max)) for i in range(counts)]
+            return [random.uniform(min, max) for i in range(counts)]
+        elif as_int:
+            return int(random.uniform(min, max))
+        return random.uniform(min, max)
+
 class Settings:
     def __init__(self):
         self._speed = 350
@@ -214,7 +229,6 @@ class Particle:
         self.surface = pg.Surface(size)
         self.surface.fill(self.bg_color)
         self.clicked = False
-        #self.direction = 0, 0
         self.__class__.all_particles.append(self)
 
     def handle_collision(self, other_rects):
@@ -227,21 +241,6 @@ class Particle:
             movement = (movement[0] * multiplier, movement[1] * multiplier)
             self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
 
-    @staticmethod
-    def _random(min, max, counts=1, as_int=False):  # TODO random.random() instead?
-        if True:
-            if counts > 1:
-                return [random.randint(min, max) for i in range(counts)]
-            return random.randint(min, max)
-        """ random.uniform is faster but produces different results """
-        if counts > 1:
-            if as_int:
-                return [int(random.uniform(min, max)) for i in range(counts)]
-            return [random.uniform(min, max) for i in range(counts)]
-        elif as_int:
-            return int(random.uniform(min, max))
-        return random.uniform(min, max)
-
     def handle_events(self, mouse_pos, mouse_pressed, settings):
         left_button, middle_button, _, = mouse_pressed
         direction = Utils.sub_pos(mouse_pos, self.position)
@@ -249,19 +248,19 @@ class Particle:
 
         if left_button and not self.clicked:
             self.clicked = True
-            movement = Particle._random(-settings.repel_dist, settings.repel_dist, counts=2)
+            movement = Utils.random(-settings.repel_dist, settings.repel_dist, counts=2)
             self._handle_movement(movement, 10)
         elif middle_button and not self.clicked:
             self.clicked = True
-            settings.speed = Particle._random(0, MAX_SPEED, as_int=True)
-            settings.barrier_dist = Particle._random(0, MAX_BARRIER_DIST, as_int=True)
-            settings.repel_dist = Particle._random(0, MAX_REPEL_DIST, as_int=True)
-            settings.repel_multiplier = Particle._random(0, MAX_REPEL_MULTIPLIER, as_int=True)
+            settings.speed = Utils.random(0, MAX_SPEED, as_int=True)
+            settings.barrier_dist = Utils.random(0, MAX_BARRIER_DIST, as_int=True)
+            settings.repel_dist = Utils.random(0, MAX_REPEL_DIST, as_int=True)
+            settings.repel_multiplier = Utils.random(0, MAX_REPEL_MULTIPLIER, as_int=True)
         elif not middle_button:
             self.clicked = False
 
         if magnitude < settings.barrier_dist:
-            movement = Particle._random(-settings.repel_dist, settings.repel_dist, counts=2)
+            movement = Utils.random(-settings.repel_dist, settings.repel_dist, counts=2)
             self._handle_movement(movement, settings.repel_multiplier)
         else:
             self._handle_movement(Utils.normalize(direction, magnitude), settings.speed)
@@ -278,9 +277,9 @@ class Particle:
     @classmethod
     def create(cls, amount=0):
         for i in range(amount):
-            size = Particle._random(1, 5, counts=2, as_int=True)
-            position = Particle._random(0, 1000, counts=2, as_int=True)
-            color = Particle._random(0, 255, counts=3, as_int=True)
+            size = Utils.random(1, 5, counts=2, as_int=True)
+            position = Utils.random(0, 1000, counts=2, as_int=True)
+            color = Utils.random(0, 255, counts=3, as_int=True)
             kwargs = {
                 "size": size,
                 "position": position,
