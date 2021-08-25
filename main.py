@@ -230,7 +230,7 @@ class Particle:
 
     @staticmethod
     def _random(min, max, counts=1, as_int=False):  # TODO random.random() instead?
-        if False:
+        if True:
             if counts > 1:
                 return [random.randint(min, max) for i in range(counts)]
             return random.randint(min, max)
