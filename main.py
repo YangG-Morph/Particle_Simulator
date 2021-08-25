@@ -11,6 +11,26 @@ MAX_BARRIER_DIST = 500
 MAX_REPEL_DIST = 500
 MAX_REPEL_MULTIPLIER = 200
 
+class Utils:
+    @staticmethod
+    def clamp(value, min, max):
+        return min if value < min else max if value > max else value
+
+    @staticmethod
+    def sub_pos(end_pos, start_pos):
+        return end_pos[0] - start_pos[0], end_pos[1] - start_pos[1]
+
+    @staticmethod
+    def hypotenuse(end_pos, start_pos):
+        a, b = Utils.sub_pos(end_pos, start_pos)
+        return math.hypot(a, b)
+
+    @staticmethod
+    def normalize(ab, magnitude):
+        if magnitude > 0:
+            return ab[0] / magnitude, ab[1] / magnitude
+        return 0, 0
+
 class Settings:
     def __init__(self):
         self._speed = 350
@@ -24,11 +44,7 @@ class Settings:
 
     @speed.setter
     def speed(self, value):
-        if value < 0:
-            value = 0
-        elif value > MAX_SPEED:
-            value = MAX_SPEED
-        self._speed = value
+        self._speed = Utils.clamp(value, 0, MAX_SPEED)
 
     @property
     def barrier_dist(self):
@@ -36,11 +52,7 @@ class Settings:
 
     @barrier_dist.setter
     def barrier_dist(self, value):
-        if value < 0:
-            value = 0
-        elif value > MAX_BARRIER_DIST:
-            value = MAX_BARRIER_DIST
-        self._barrier_dist = value
+        self._barrier_dist = Utils.clamp(value, 0, MAX_BARRIER_DIST)
 
     @property
     def repel_dist(self):
@@ -48,11 +60,7 @@ class Settings:
 
     @repel_dist.setter
     def repel_dist(self, value):
-        if value < 0:
-            value = 0
-        elif value > MAX_REPEL_DIST:
-            value = MAX_REPEL_DIST
-        self._repel_dist = value
+        self._repel_dist = Utils.clamp(value, 0, MAX_REPEL_DIST)
 
     @property
     def repel_multiplier(self):
@@ -60,11 +68,7 @@ class Settings:
 
     @repel_multiplier.setter
     def repel_multiplier(self, value):
-        if value < 0:
-            value = 0
-        elif value > MAX_REPEL_MULTIPLIER:
-            value = MAX_REPEL_MULTIPLIER
-        self._repel_multiplier = value
+        self._repel_multiplier = Utils.clamp(value, 0, MAX_REPEL_MULTIPLIER)
 
 class Slider:
     def __init__(self,
@@ -211,7 +215,7 @@ class Particle:
         self.surface = pg.Surface(size)
         self.surface.fill(self.bg_color)
         self.clicked = False
-        self.a, self.b = 0, 0
+        self.direction = 0, 0
         self.__class__.all_particles.append(self)
 
     def handle_collision(self, other_rects):
@@ -223,16 +227,6 @@ class Particle:
         if multiplier:
             movement = (movement[0] * multiplier, movement[1] * multiplier)
             self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
-
-    def _hypotenuse(self, other_pos):
-        self.a, self.b = other_pos[0] - self.position[0], other_pos[1] - self.position[1]
-        return math.hypot(self.a, self.b)
-
-    def _normalize(self, magnitude):
-        if magnitude > 0:
-            normalized = (self.a / magnitude, self.b / magnitude)
-            return normalized
-        return 0, 0
 
     @staticmethod
     def _random(min, max, counts=1, as_int=False):  # TODO random.random() instead?
@@ -251,7 +245,8 @@ class Particle:
 
     def handle_events(self, mouse_pos, mouse_pressed, settings):
         left_button, middle_button, _, = mouse_pressed
-        magnitude = self._hypotenuse(mouse_pos)
+        self.direction = Utils.sub_pos(mouse_pos, self.position)
+        magnitude = Utils.hypotenuse(mouse_pos, self.position)
 
         if left_button and not self.clicked:
             self.clicked = True
@@ -270,7 +265,7 @@ class Particle:
             movement = Particle._random(-settings.repel_dist, settings.repel_dist, counts=2)
             self._handle_movement(movement, settings.repel_multiplier)
         else:
-            self._handle_movement(self._normalize(magnitude), settings.speed)
+            self._handle_movement(Utils.normalize(self.direction, magnitude), settings.speed)
 
     def update(self):
         self.rect.center = self.position
