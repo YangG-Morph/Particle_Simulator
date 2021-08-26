@@ -207,11 +207,13 @@ class Text:
             if not self.keying:
                 if keys[pg.K_BACKSPACE] and not self.keying:
                     self.keying = True
+                    self.input_started = False
                     self.value_str = self.value_str[:-1]
                     self.rendered_text = self.font.render(f"{self.orig_text}{self.value_str}", True, self.fg_color)
                 elif keys[pg.K_RETURN] or keys[pg.K_KP_ENTER]:
                     self.input_mode = False
                     self.keying = False
+                    self.input_started = False
                     self.fg_color = pg.Color("grey")
                     self.prev_value = -1
                     self.value = int(self.value_str) if len(self.value_str) > 0 else 0
