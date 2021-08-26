@@ -5,7 +5,7 @@ import pygame as pg
 import value as value
 
 """ Constants """
-MAX_PARTICLES = 5_000
+MAX_PARTICLES = 5000
 SCREEN_SIZE = (1250, 750)
 FPS = 60
 
@@ -54,7 +54,7 @@ class Utils:
 
 class Settings:
     def __init__(self):
-        self._speed = 30
+        self._speed = 10
         self._barrier_dist = 20
         self._repel_dist = 10
         self._repel_multiplier = 2
@@ -91,6 +91,11 @@ class Settings:
     def repel_multiplier(self, value):
         self._repel_multiplier = Utils.clamp(value, 0, MAX_REPEL_MULTIPLIER)
 
+    def __str__(self):
+        return f"speed: {self._speed}\n" \
+               f"barrier dist: {self._barrier_dist}\n" \
+               f"repel dist: {self._repel_dist}\n" \
+               f"repel mult: {self._repel_multiplier}\n"
 
 class Slider:
     def __init__(self,
@@ -193,6 +198,7 @@ class Text:
             self.slider.update(self.value)
         elif right_button and self.prev_collided:
             self.prev_collided = True
+            Text.update_settings(settings)
             movement = (mouse_pos[0] - self.slider.start_pos[0]) + (self.slider.start_pos[1] - mouse_pos[1])
             setattr(settings, self.name, movement + self.start_value)
             self.value = getattr(settings, self.name)
@@ -211,13 +217,7 @@ class Text:
                     self.value_str = self.value_str[:-1]
                     self.rendered_text = self.font.render(f"{self.orig_text}{self.value_str}", True, self.fg_color)
                 elif keys[pg.K_RETURN] or keys[pg.K_KP_ENTER]:
-                    self.input_mode = False
-                    self.keying = False
-                    self.input_started = False
-                    self.fg_color = pg.Color("grey")
-                    self.prev_value = -1
-                    self.value = int(self.value_str) if len(self.value_str) > 0 else 0
-                    setattr(settings, self.name, self.value)
+                    Text.update_settings(settings)
 
     def update(self):
         if self.prev_value != self.value or self.prev_color != self.fg_color:
@@ -239,6 +239,19 @@ class Text:
 
     def set_value(self, value):
         self.value = value
+
+    @classmethod
+    def update_settings(cls, settings):
+        for t in Text.all_text:
+            if t.input_mode:
+                t.input_mode = False
+                t.keying = False
+                t.input_started = False
+                t.fg_color = pg.Color("grey")
+                t.prev_value = -1
+                t.value = int(t.value_str) if len(t.value_str) > 0 else 0
+                setattr(settings, t.name, t.value)
+                t.rendered_text = t.font.render(f"{t.orig_text}{t.value_str}", True, t.fg_color)
 
     @classmethod
     def group_events(cls, mouse_pos, mouse_pressed, settings, keys=None):
@@ -275,6 +288,7 @@ class Particle:
         self.rect = pg.Rect(position, size)
         self.surface = pg.Surface(size)
         self.surface.fill(self.bg_color)
+        self.prev_pos = None
         self.__class__.all_particles.append(self)
 
     def handle_collision(self, other_rects):
@@ -288,12 +302,12 @@ class Particle:
             self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
 
     def handle_events(self, mouse_pos, mouse_pressed, settings, keys=None):
-        left_button, middle_button, _, = mouse_pressed
+        left_button, middle_button, right_button = mouse_pressed
         direction = Utils.sub_pos(mouse_pos, self.position)
         magnitude = Utils.hypotenuse(direction)
 
         if left_button and not self.__class__.clicked:
-            if not Text.clicked:
+            if not Text.clicked: # TODO move out of Particle to Text
                 text = Text.text_collision(mouse_pos)
                 if text:
                     Text.clicked = True
@@ -306,30 +320,28 @@ class Particle:
                     for t in Text.all_text:
                         if t is not text:
                             t.input_mode = False
-                            t.prev_value = -1
-                else:
-                    self.__class__.clicked = True
-                    Text.clicked = False
-                    for t in Text.all_text:
-                        if t.input_mode:
-                            t.input_mode = False
                             t.keying = False
+                            t.input_started = False
                             t.fg_color = pg.Color("grey")
                             t.prev_value = -1
-                            t.value = int(t.value_str) if len(t.value_str) > 0 else 0
+                            t.value = int(t.value_str) if t.value_str.isnumeric() else t.value
                             setattr(settings, t.name, t.value)
-                            t.rendered_text = t.font.render(f"{t.orig_text}{t.value_str}", True, t.fg_color)
+                else:
+                    Text.clicked = False
+                    Text.update_settings(settings)
                     movement = Utils.randfloat(-settings.repel_dist, settings.repel_dist, count=2)
-                    self._handle_movement(movement, 10)
+                    self._handle_movement(movement, 15)
             else:
                 self.__class__.clicked = True
         elif middle_button and not self.__class__.clicked:
-            self.clicked = True
+            self.__class__.clicked = True
             settings.speed = Utils.randint(0, MAX_SPEED)
             settings.barrier_dist = Utils.randint(0, MAX_BARRIER_DIST)
             settings.repel_dist = Utils.randint(0, MAX_REPEL_DIST)
             settings.repel_multiplier = Utils.randint(0, MAX_REPEL_MULTIPLIER)
-        elif not middle_button:
+        elif right_button and not self.__class__.clicked:
+            Text.update_settings(settings)
+        elif not middle_button and not left_button and not right_button:
             self.__class__.clicked = False
 
         if magnitude < settings.barrier_dist:
@@ -398,12 +410,14 @@ class Game:
         pg.key.set_repeat(0)
 
         while self.running:
+            self.screen.fill(self.bg_color)  # TODO Cool effect if delayed?
+
             for event in pg.event.get():
                 self.handle_quit(event)
                 if event.type in [pg.KEYUP]:
                     for text in Text.all_text:
                         text.keying = False
-                if event.type in [pg.KEYDOWN]:
+                elif event.type in [pg.KEYDOWN]:
                     text = [t for t in Text.all_text if t.input_mode]
                     if event.unicode.isdigit() and text:
                         text = text[0]
@@ -413,7 +427,6 @@ class Game:
                         else:
                             text.value_str += event.unicode
                         text.rendered_text = text.font.render(f"{text.orig_text}{text.value_str}", True, text.fg_color)
-            self.screen.fill(self.bg_color)
 
             mouse_pos = pg.mouse.get_pos()
             mouse_buttons = pg.mouse.get_pressed()
