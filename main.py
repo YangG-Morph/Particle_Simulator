@@ -1,5 +1,8 @@
 import math, random, sys
+from functools import lru_cache
+
 import pygame as pg
+import value as value
 
 """ Constants """
 MAX_PARTICLES = 5_000
@@ -10,6 +13,7 @@ MAX_SPEED = 500
 MAX_BARRIER_DIST = 500
 MAX_REPEL_DIST = 500
 MAX_REPEL_MULTIPLIER = 200
+
 
 class Utils:
     @staticmethod
@@ -46,6 +50,7 @@ class Utils:
         if count > 1:
             return [random.random() * (max - min) + min for _ in range(count)]
         return random.random() * (max - min) + min
+
 
 class Settings:
     def __init__(self):
@@ -86,6 +91,7 @@ class Settings:
     def repel_multiplier(self, value):
         self._repel_multiplier = Utils.clamp(value, 0, MAX_REPEL_MULTIPLIER)
 
+
 class Slider:
     def __init__(self,
                  position=(0, 0),
@@ -117,6 +123,7 @@ class Slider:
         pg.draw.rect(surface, self.bg_color, self.bg_rect)
         pg.draw.rect(surface, self.fg_color, self.fg_rect)
 
+
 class Text:
     all_text = []
     margin_y = 3
@@ -127,7 +134,7 @@ class Text:
                  name="",
                  text="",
                  bg_color=pg.Color("black"),
-                 fg_color=pg.Color("white"),
+                 fg_color=pg.Color("grey"),
                  ignore_collision=False,
                  max_width=500,
                  ):
@@ -139,11 +146,16 @@ class Text:
         self.prev_value = self.rendered_text
         self.font = pg.font.SysFont("Calibri", 24)
         self.value = None
+        self.value_str = str(self.value)
         self.start_value = None
         self.collided = False
+        self.prev_color = None
         self.prev_collided = False
         self.max_width = max_width
         self.ignore_collision = ignore_collision
+        self.input_mode = False
+        self.keying = False
+        self.input_started = False
         self.__class__.all_text.append(self)
         self.index = Text.all_text.index(self)
         self.position = (
@@ -161,9 +173,16 @@ class Text:
             fg_color=pg.Color("darkred"),
         )
 
-    def handle_events(self, mouse_pos, mouse_pressed, settings):
+    def handle_events(self, mouse_pos, mouse_pressed, settings, keys=None):
         _, _, right_button = mouse_pressed
         self.collided = self.slider.collision_rect.collidepoint(mouse_pos)
+
+        if self.collided and not self.ignore_collision and not [t for t in Text.all_text if t.input_mode]:
+            self.prev_color = self.fg_color
+            self.fg_color = pg.Color("white")
+        elif not self.input_mode:
+            self.prev_color = self.fg_color
+            self.fg_color = pg.Color("grey")
 
         if not self.ignore_collision and right_button and self.collided and not self.__class__.clicked:
             self.__class__.clicked = True
@@ -184,10 +203,27 @@ class Text:
             self.prev_collided = False
             self.position = (0, self.position[1])
 
+        if self.input_mode:
+            if not self.keying:
+                if keys[pg.K_BACKSPACE] and not self.keying:
+                    self.keying = True
+                    self.value_str = self.value_str[:-1]
+                    self.rendered_text = self.font.render(f"{self.orig_text}{self.value_str}", True, self.fg_color)
+                elif keys[pg.K_RETURN] or keys[pg.K_KP_ENTER]:
+                    self.input_mode = False
+                    self.keying = False
+                    self.fg_color = pg.Color("grey")
+                    self.prev_value = -1
+                    self.value = int(self.value_str) if len(self.value_str) > 0 else 0
+                    setattr(settings, self.name, self.value)
+
     def update(self):
-        if self.prev_value != self.value:
+        if self.prev_value != self.value or self.prev_color != self.fg_color:
             self.prev_value = self.value
-            self.rendered_text = self.font.render(f"{self.orig_text}{self.value}", True, self.fg_color)
+            if not self.input_mode:
+                self.rendered_text = self.font.render(f"{self.orig_text}{self.value}", True, self.fg_color)
+            else:
+                self.rendered_text = self.font.render(f"{self.orig_text}{self.value_str}", True, self.fg_color)
 
             size = (self.rendered_text.get_width(), self.rendered_text.get_height())
             self.slider.collision_rect.update(self.slider.collision_rect.topleft, size)
@@ -203,8 +239,8 @@ class Text:
         self.value = value
 
     @classmethod
-    def group_events(cls, mouse_pos, mouse_pressed, settings):
-        [text.handle_events(mouse_pos, mouse_pressed, settings) for text in cls.all_text]
+    def group_events(cls, mouse_pos, mouse_pressed, settings, keys=None):
+        [text.handle_events(mouse_pos, mouse_pressed, settings, keys) for text in cls.all_text]
 
     @classmethod
     def group_draw(cls, surface):
@@ -214,8 +250,15 @@ class Text:
     def set_values(cls, settings):
         [cls.all_text[i].set_value(getattr(settings, cls.all_text[i].name)) for i in range(len(cls.all_text) - 1)]
 
+    @classmethod
+    @lru_cache()
+    def text_collision(cls, mouse_pos):
+        return [t for t in cls.all_text if not t.ignore_collision and t.slider.bg_rect.collidepoint(mouse_pos)]
+
+
 class Particle:
     all_particles = []
+    clicked = False
 
     def __init__(self,
                  size=(50, 50),
@@ -230,7 +273,6 @@ class Particle:
         self.rect = pg.Rect(position, size)
         self.surface = pg.Surface(size)
         self.surface.fill(self.bg_color)
-        self.clicked = False
         self.__class__.all_particles.append(self)
 
     def handle_collision(self, other_rects):
@@ -243,30 +285,50 @@ class Particle:
             movement = (movement[0] * multiplier, movement[1] * multiplier)
             self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
 
-    def handle_events(self, mouse_pos, mouse_pressed, settings):
+    def handle_events(self, mouse_pos, mouse_pressed, settings, keys=None):
         left_button, middle_button, _, = mouse_pressed
         direction = Utils.sub_pos(mouse_pos, self.position)
         magnitude = Utils.hypotenuse(direction)
 
-        if left_button and not self.clicked:
+        if left_button and not self.__class__.clicked:
             if not Text.clicked:
-                if [True for text in Text.all_text if not text.ignore_collision and text.slider.bg_rect.collidepoint(mouse_pos)]:
+                text = Text.text_collision(mouse_pos)
+                if text:
                     Text.clicked = True
+                    text = text[0]
+                    text.input_mode = True
+                    text.input_started = True
+                    text.fg_color = pg.Color("white")
+                    text.rendered_text = text.font.render(f"{text.orig_text}{text.value}", True, text.fg_color)
+                    text.value_str = str(text.value)
+                    for t in Text.all_text:
+                        if t is not text:
+                            t.input_mode = False
+                            t.prev_value = -1
                 else:
-                    self.clicked = True
+                    self.__class__.clicked = True
                     Text.clicked = False
+                    for t in Text.all_text:
+                        if t.input_mode:
+                            t.input_mode = False
+                            t.keying = False
+                            t.fg_color = pg.Color("grey")
+                            t.prev_value = -1
+                            t.value = int(t.value_str) if len(t.value_str) > 0 else 0
+                            setattr(settings, t.name, t.value)
+                            t.rendered_text = t.font.render(f"{t.orig_text}{t.value_str}", True, t.fg_color)
                     movement = Utils.randfloat(-settings.repel_dist, settings.repel_dist, count=2)
                     self._handle_movement(movement, 10)
-
-
-        elif middle_button and not self.clicked:
+            else:
+                self.__class__.clicked = True
+        elif middle_button and not self.__class__.clicked:
             self.clicked = True
             settings.speed = Utils.randint(0, MAX_SPEED)
             settings.barrier_dist = Utils.randint(0, MAX_BARRIER_DIST)
             settings.repel_dist = Utils.randint(0, MAX_REPEL_DIST)
             settings.repel_multiplier = Utils.randint(0, MAX_REPEL_MULTIPLIER)
         elif not middle_button:
-            self.clicked = False
+            self.__class__.clicked = False
 
         if magnitude < settings.barrier_dist:
             movement = Utils.randfloat(-settings.repel_dist, settings.repel_dist, count=2)
@@ -301,8 +363,8 @@ class Particle:
         [particle.draw(surface) for particle in cls.all_particles]
 
     @classmethod
-    def group_events(cls, mouse_pos, mouse_pressed, settings):
-        [particle.handle_events(mouse_pos, mouse_pressed, settings) for particle in cls.all_particles]
+    def group_events(cls, mouse_pos, mouse_pressed, settings, keys=None):
+        [particle.handle_events(mouse_pos, mouse_pressed, settings, keys) for particle in cls.all_particles]
 
     @classmethod
     def group_collision(cls, other_rects):
@@ -317,31 +379,49 @@ class Game:
         self.bg_color = pg.Color("black")
         self.settings = Settings()
         self.speed_text = Text("speed", "Speed: ", bg_color=self.bg_color, max_width=MAX_SPEED)
-        self.barrier_text = Text("barrier_dist", "Barrier distance: ", bg_color=self.bg_color, max_width=MAX_BARRIER_DIST)
+        self.barrier_text = Text("barrier_dist", "Barrier distance: ", bg_color=self.bg_color,
+                                 max_width=MAX_BARRIER_DIST)
         self.repel_text = Text("repel_dist", "Repel distance: ", bg_color=self.bg_color, max_width=MAX_REPEL_DIST)
-        self.repel_mult_text = Text("repel_multiplier", "Repel multiplier: ", bg_color=self.bg_color, max_width=MAX_REPEL_MULTIPLIER)
+        self.repel_mult_text = Text("repel_multiplier", "Repel multiplier: ", bg_color=self.bg_color,
+                                    max_width=MAX_REPEL_MULTIPLIER)
         self.fps_text = Text(text="FPS: ", bg_color=self.bg_color, ignore_collision=True)
         Particle.create(MAX_PARTICLES)
 
-    def handle_quit(self):
-        for event in pg.event.get():
-            if event.type in [pg.QUIT] or event.type in [pg.KEYDOWN] and event.key in [pg.K_ESCAPE]:
-                pg.quit()
-                sys.exit()
+    def handle_quit(self, event):
+        if event.type in [pg.QUIT] or event.type in [pg.KEYDOWN] and event.key in [pg.K_ESCAPE]:
+            pg.quit()
+            sys.exit()
 
     def run(self):
+        pg.key.set_repeat(0)
+
         while self.running:
-            self.handle_quit()
+            for event in pg.event.get():
+                self.handle_quit(event)
+                if event.type in [pg.KEYUP]:
+                    for text in Text.all_text:
+                        text.keying = False
+                if event.type in [pg.KEYDOWN]:
+                    text = [t for t in Text.all_text if t.input_mode]
+                    if event.unicode.isdigit() and text:
+                        text = text[0]
+                        if text.input_started:
+                            text.value_str = event.unicode
+                            text.input_started = False
+                        else:
+                            text.value_str += event.unicode
+                        text.rendered_text = text.font.render(f"{text.orig_text}{text.value_str}", True, text.fg_color)
             self.screen.fill(self.bg_color)
 
             mouse_pos = pg.mouse.get_pos()
             mouse_buttons = pg.mouse.get_pressed()
+            keys = pg.key.get_pressed()
 
             Particle.group_events(mouse_pos, mouse_buttons, self.settings)
             Particle.group_draw(self.screen)
 
             Text.set_values(self.settings)
-            Text.group_events(mouse_pos, mouse_buttons, self.settings)
+            Text.group_events(mouse_pos, mouse_buttons, self.settings, keys)
             Text.group_draw(self.screen)
 
             self.clock.tick(FPS)
