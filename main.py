@@ -31,26 +31,28 @@ class Utils:
         return 0, 0
 
     @staticmethod
-    def random(min, max, counts=1, as_int=False):  # TODO random.random() instead?
-        if True:
-            if counts > 1:
-                return [random.randint(min, max) for i in range(counts)]
-            return random.randint(min, max)
-        """ random.uniform is faster but produces different results """
-        if counts > 1:
-            if as_int:
-                return [int(random.uniform(min, max)) for i in range(counts)]
-            return [random.uniform(min, max) for i in range(counts)]
-        elif as_int:
-            return int(random.uniform(min, max))
-        return random.uniform(min, max)
+    def randint(min, max, count=1):
+        """ Max is inclusive """
+        min = math.ceil(min)
+        max = math.floor(max + 1)
+
+        if count > 1:
+            return [math.floor(random.random() * (max - min) + min) for _ in range(count)]
+        return math.floor(random.random() * (max - min) + min)
+
+    @staticmethod
+    def randfloat(min, max, count=1):
+        """ Max is exclusive"""
+        if count > 1:
+            return [random.random() * (max - min) + min for _ in range(count)]
+        return random.random() * (max - min) + min
 
 class Settings:
     def __init__(self):
-        self._speed = 350
-        self._barrier_dist = 330
-        self._repel_dist = 1
-        self._repel_multiplier = 200
+        self._speed = 30
+        self._barrier_dist = 20
+        self._repel_dist = 10
+        self._repel_multiplier = 2
 
     @property
     def speed(self):
@@ -126,7 +128,7 @@ class Text:
                  text="",
                  bg_color=pg.Color("black"),
                  fg_color=pg.Color("white"),
-                 collision_ignore=False,
+                 ignore_collision=False,
                  max_width=500,
                  ):
         self.orig_text = text
@@ -141,7 +143,7 @@ class Text:
         self.collided = False
         self.prev_collided = False
         self.max_width = max_width
-        self.collision_ignore = collision_ignore
+        self.ignore_collision = ignore_collision
         self.__class__.all_text.append(self)
         self.index = Text.all_text.index(self)
         self.position = (
@@ -163,7 +165,7 @@ class Text:
         _, _, right_button = mouse_pressed
         self.collided = self.slider.collision_rect.collidepoint(mouse_pos)
 
-        if not self.collision_ignore and right_button and self.collided and not self.__class__.clicked:
+        if not self.ignore_collision and right_button and self.collided and not self.__class__.clicked:
             self.__class__.clicked = True
             self.prev_collided = True
             self.value = getattr(settings, self.name)
@@ -194,7 +196,7 @@ class Text:
     def draw(self, surface):
         self.update()
         surface.blit(self.rendered_text, self.position)
-        if self.__class__.clicked and self.prev_collided and not self.collision_ignore:
+        if self.__class__.clicked and self.prev_collided and not self.ignore_collision:
             self.slider.draw(surface)
 
     def set_value(self, value):
@@ -247,20 +249,27 @@ class Particle:
         magnitude = Utils.hypotenuse(direction)
 
         if left_button and not self.clicked:
-            self.clicked = True
-            movement = Utils.random(-settings.repel_dist, settings.repel_dist, counts=2)
-            self._handle_movement(movement, 10)
+            if not Text.clicked:
+                if [True for text in Text.all_text if not text.ignore_collision and text.slider.bg_rect.collidepoint(mouse_pos)]:
+                    Text.clicked = True
+                else:
+                    self.clicked = True
+                    Text.clicked = False
+                    movement = Utils.randfloat(-settings.repel_dist, settings.repel_dist, count=2)
+                    self._handle_movement(movement, 10)
+
+
         elif middle_button and not self.clicked:
             self.clicked = True
-            settings.speed = Utils.random(0, MAX_SPEED, as_int=True)
-            settings.barrier_dist = Utils.random(0, MAX_BARRIER_DIST, as_int=True)
-            settings.repel_dist = Utils.random(0, MAX_REPEL_DIST, as_int=True)
-            settings.repel_multiplier = Utils.random(0, MAX_REPEL_MULTIPLIER, as_int=True)
+            settings.speed = Utils.randint(0, MAX_SPEED)
+            settings.barrier_dist = Utils.randint(0, MAX_BARRIER_DIST)
+            settings.repel_dist = Utils.randint(0, MAX_REPEL_DIST)
+            settings.repel_multiplier = Utils.randint(0, MAX_REPEL_MULTIPLIER)
         elif not middle_button:
             self.clicked = False
 
         if magnitude < settings.barrier_dist:
-            movement = Utils.random(-settings.repel_dist, settings.repel_dist, counts=2)
+            movement = Utils.randfloat(-settings.repel_dist, settings.repel_dist, count=2)
             self._handle_movement(movement, settings.repel_multiplier)
         else:
             self._handle_movement(Utils.normalize(direction, magnitude), settings.speed)
@@ -277,9 +286,9 @@ class Particle:
     @classmethod
     def create(cls, amount=0):
         for i in range(amount):
-            size = Utils.random(1, 5, counts=2, as_int=True)
-            position = Utils.random(0, 1000, counts=2, as_int=True)
-            color = Utils.random(0, 255, counts=3, as_int=True)
+            size = Utils.randint(1, 5, count=2)
+            position = Utils.randint(0, 1000, count=2)
+            color = Utils.randint(0, 255, count=3)
             kwargs = {
                 "size": size,
                 "position": position,
@@ -311,7 +320,7 @@ class Game:
         self.barrier_text = Text("barrier_dist", "Barrier distance: ", bg_color=self.bg_color, max_width=MAX_BARRIER_DIST)
         self.repel_text = Text("repel_dist", "Repel distance: ", bg_color=self.bg_color, max_width=MAX_REPEL_DIST)
         self.repel_mult_text = Text("repel_multiplier", "Repel multiplier: ", bg_color=self.bg_color, max_width=MAX_REPEL_MULTIPLIER)
-        self.fps_text = Text(text="FPS: ", bg_color=self.bg_color, collision_ignore=True)
+        self.fps_text = Text(text="FPS: ", bg_color=self.bg_color, ignore_collision=True)
         Particle.create(MAX_PARTICLES)
 
     def handle_quit(self):
