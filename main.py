@@ -2,7 +2,7 @@ import math, random, sys
 from array import array
 from functools import lru_cache
 import pygame as pg
-
+import cProfile as cp
 """ Constants """
 MAX_PARTICLES = 5000
 SCREEN_SIZE = (1250, 750)
@@ -57,6 +57,12 @@ class Utils:
         if count > 1:
             return [random.random() * (max - min) + min for _ in range(count)]
         return random.random() * (max - min) + min
+
+    @staticmethod
+    def rand_uniform(min, max, count=1):
+        if count > 1:
+            return [random.uniform(min, max) for _ in range(count)]
+        return random.uniform(min, max)
 
 class Settings:
     def __init__(self):
@@ -337,15 +343,19 @@ class Particle:
             if self.rect.colliderect(rect):
                 pass  # self.position =
 
-    def _handle_movement(self, movement, multiplier=None):  # TODO Slow2
-        if multiplier:  # TODO properly handle without if statement?
-            movement = (movement[0] * multiplier, movement[1] * multiplier)
-            self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
+    def _handle_movement(self, movement, multiplier=0):  # TODO Slow2
+        movement = (movement[0] * multiplier, movement[1] * multiplier)
+        self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
 
-    def _test_buttons(self, left_button, middle_button, right_button):
+    def handle_events(self, mouse_pos, mouse_pressed, keys=None):
+        left_button, middle_button, right_button = mouse_pressed
+        direction = Utils.sub_pos(mouse_pos, self.position)
+        magnitude = Utils.hypotenuse(direction)
+
         if left_button and not Particle.clicked:
             if not Text.clicked:
                 movement = Utils.randfloat(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)
+                # movement = Utils.rand_uniform(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)
                 self._handle_movement(movement, 15)
             else:
                 Particle.clicked = True
@@ -362,22 +372,13 @@ class Particle:
             Particle.clicked = False
             Particle.freeze_time = False
 
-    def _test_particle_handling(self, direction, magnitude):  # TODO Slow1
         if not Particle.freeze_time:
             self._handle_movement(Utils.normalize(direction, magnitude), Particle.settings.speed)
 
-        if magnitude < Particle.settings.barrier_dist:
-            movement = Utils.randfloat(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)
+        if magnitude < Particle.settings.barrier_dist:  # TODO Slow1, slow slow
+            movement = Utils.randfloat(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)  # TODO Slow1.1
+            # movement = Utils.rand_uniform(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)  # Even slower
             self._handle_movement(movement, Particle.settings.repel_multiplier)
-
-    def handle_events(self, mouse_pos, mouse_pressed, keys=None):
-        #left_button, middle_button, right_button = mouse_pressed
-        direction = Utils.sub_pos(mouse_pos, self.position)
-        magnitude = Utils.hypotenuse(direction)
-
-        self._test_buttons(*mouse_pressed)
-
-        self._test_particle_handling(direction, magnitude)
 
     def update(self):
         self.rect.center = self.position
@@ -422,8 +423,8 @@ class Game:
         self.clock = pg.time.Clock()
         self.bg_color = pg.Color("black")
         self.settings = Settings()
-        Text.settings = self.settings # TODO better way to pass settings around, maybe a controller class, class method
-        Particle.settings = self.settings # TODO then object no longer needed
+        Text.settings = self.settings # TODO better way to pass settings around, maybe a controller class,
+        Particle.settings = self.settings # TODO Class methods! Class variables! then object no longer needed
 
         self.speed_text = Text("speed", "Speed: ", bg_color=self.bg_color, max_width=MAX_SPEED)
         self.barrier_text = Text("barrier_dist", "Barrier distance: ", bg_color=self.bg_color,
@@ -480,3 +481,4 @@ if __name__ == '__main__':
     pg.display.set_caption("Particle Simulator")
 
     Game(display).run()
+    #cp.run("Game(display).run()")
