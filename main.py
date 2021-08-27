@@ -215,12 +215,12 @@ class Text:
                         t.value = int(t.value_str) if t.value_str.isnumeric() and t.value_str == t.value else t.value # Here bug
                         setattr(Text.settings, t.name, t.value)
             else:
-                Text.update_settings(Text.all_text)  # TODO limit to one use
+                Text.reset(Text.all_text)  # TODO limit to one use
         elif right_button and self.collided and not self.ignore_collision and not Text.clicked:
             Text.clicked = True
             texts = [t for t in Text.all_text if t.prev_collided]
             if texts:
-                Text.update_settings(texts)
+                Text.reset(texts)
             self.prev_collided = True
             self.value = getattr(Text.settings, self.name)
             self.start_value = getattr(Text.settings, self.name)
@@ -234,7 +234,7 @@ class Text:
             self.slider.update(self.value)
             self.position = (self.slider.max_width, self.position[1])
         elif right_button and not self.prev_collided:
-            Text.update_settings(Text.all_text)
+            Text.reset(Text.all_text)
         elif not right_button and not left_button :
             Text.clicked = False
             if self.prev_collided:
@@ -249,7 +249,7 @@ class Text:
                     self.value_str = self.value_str[:-1]
                     self.rendered_text = self.font.render(f"{self.orig_text}{self.value_str}", True, self.fg_color)
                 elif keys[pg.K_RETURN] or keys[pg.K_KP_ENTER]:
-                    Text.update_settings(Text.all_text)
+                    Text.reset(Text.all_text)
 
     def update(self):
         if self.name:
@@ -280,8 +280,7 @@ class Text:
         self.value = value
 
     @classmethod
-    def update_settings(cls, texts):
-        print("Update resetting")
+    def reset(cls, texts):
         for t in texts:
             if t.input_mode:
                 t.input_mode = False
