@@ -216,7 +216,7 @@ class Text:
                         setattr(Text.settings, t.name, t.value)
             elif self.input_mode:
                 Text.reset(Text.all_text)
-        elif right_button and self.collided and not self.ignore_collision and not Text.clicked:
+        elif right_button and self.collided and not self.ignore_collision and not Text.clicked and not Particle.freeze_time:
             Text.clicked = True
             texts = [t for t in Text.all_text if t.prev_collided]
             if texts:
@@ -235,7 +235,7 @@ class Text:
             self.position = (self.slider.max_width, self.position[1])
         elif right_button and not self.prev_collided and self.input_mode:
             Text.reset(Text.all_text)
-        elif not right_button and not left_button :
+        elif not right_button and not left_button:
             Text.clicked = False
             if self.prev_collided:
                 self.prev_collided = False
@@ -314,6 +314,7 @@ class Particle:
     all_particles = []
     clicked = False
     settings = None
+    freeze_time = False
 
     def __init__(self,
                  size=(50, 50),
@@ -336,16 +337,12 @@ class Particle:
             if self.rect.colliderect(rect):
                 pass  # self.position =
 
-    def _handle_movement(self, movement, multiplier=None):
-        if multiplier:
+    def _handle_movement(self, movement, multiplier=None):  # TODO Slow2
+        if multiplier:  # TODO properly handle without if statement?
             movement = (movement[0] * multiplier, movement[1] * multiplier)
             self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
 
-    def handle_events(self, mouse_pos, mouse_pressed, keys=None):
-        left_button, middle_button, right_button = mouse_pressed
-        direction = Utils.sub_pos(mouse_pos, self.position)
-        magnitude = Utils.hypotenuse(direction)
-
+    def _test_buttons(self, left_button, middle_button, right_button):
         if left_button and not Particle.clicked:
             if not Text.clicked:
                 movement = Utils.randfloat(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)
@@ -354,19 +351,33 @@ class Particle:
                 Particle.clicked = True
         elif middle_button and not Particle.clicked:
             Particle.clicked = True
+            Text.reset(Text.all_text)
             Particle.settings.speed = Utils.randint(0, MAX_SPEED)
             Particle.settings.barrier_dist = Utils.randint(0, MAX_BARRIER_DIST)
             Particle.settings.repel_dist = Utils.randint(0, MAX_REPEL_DIST)
             Particle.settings.repel_multiplier = Utils.randint(0, MAX_REPEL_MULTIPLIER)
-        elif not middle_button and not right_button and not left_button:
+        elif right_button and not Particle.clicked and not Text.clicked:
+            Particle.freeze_time = True
+        elif not middle_button:
             Particle.clicked = False
+            Particle.freeze_time = False
+
+    def _test_particle_handling(self, direction, magnitude):  # TODO Slow1
+        if not Particle.freeze_time:
             self._handle_movement(Utils.normalize(direction, magnitude), Particle.settings.speed)
 
         if magnitude < Particle.settings.barrier_dist:
             movement = Utils.randfloat(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)
             self._handle_movement(movement, Particle.settings.repel_multiplier)
-        #elif not Particle.clicked:#else:
 
+    def handle_events(self, mouse_pos, mouse_pressed, keys=None):
+        #left_button, middle_button, right_button = mouse_pressed
+        direction = Utils.sub_pos(mouse_pos, self.position)
+        magnitude = Utils.hypotenuse(direction)
+
+        self._test_buttons(*mouse_pressed)
+
+        self._test_particle_handling(direction, magnitude)
 
     def update(self):
         self.rect.center = self.position
@@ -411,8 +422,8 @@ class Game:
         self.clock = pg.time.Clock()
         self.bg_color = pg.Color("black")
         self.settings = Settings()
-        Text.settings = self.settings
-        Particle.settings = self.settings
+        Text.settings = self.settings # TODO better way to pass settings around, maybe a controller class, class method
+        Particle.settings = self.settings # TODO then object no longer needed
 
         self.speed_text = Text("speed", "Speed: ", bg_color=self.bg_color, max_width=MAX_SPEED)
         self.barrier_text = Text("barrier_dist", "Barrier distance: ", bg_color=self.bg_color,
@@ -446,12 +457,13 @@ class Game:
         mouse_buttons = pg.mouse.get_pressed(num_buttons=3)
         keys = pg.key.get_pressed()
 
-        Text.group_events(mouse_pos, mouse_buttons, keys)
+        Text.group_events(mouse_pos, mouse_buttons, keys) # TODO Event Controller to handle events between classes
         Particle.group_events(mouse_pos, mouse_buttons)
 
     def run(self):
         while self.running:
-            self.screen.fill(self.bg_color)  # TODO Cool effect if delayed?
+            if True:
+                self.screen.fill(self.bg_color)  # TODO draw but don't refresh the background
             self.handle_events(pg.event.get())
 
             Particle.group_draw(self.screen)
