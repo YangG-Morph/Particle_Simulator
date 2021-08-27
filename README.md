@@ -5,7 +5,8 @@ Simulates particles moving towards the mouse.
 ***** **[Warning - Many flashing colors]** *****
 
 
-Left click to deflect particles, middle click to randomize settings and right click on settings to activate sliders.
+Left click to deflect particles, middle click to randomize settings and right click to freeze particles.
+Settings are editable via clicking then entering amount or with the right mouse button.
 
 * 10,000 Particles gets around 20-30 fps
 
