@@ -443,7 +443,7 @@ class Game:
                     text.rendered_text = text.font.render(f"{text.orig_text}{text.value_str}", True, text.fg_color)
 
         mouse_pos = pg.mouse.get_pos()
-        mouse_buttons = pg.mouse.get_pressed()
+        mouse_buttons = pg.mouse.get_pressed(num_buttons=3)
         keys = pg.key.get_pressed()
 
         Text.group_events(mouse_pos, mouse_buttons, keys)
