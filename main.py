@@ -214,8 +214,8 @@ class Text:
                         t.prev_value = -1
                         t.value = int(t.value_str) if t.value_str.isnumeric() and t.value_str == t.value else t.value # Here bug
                         setattr(Text.settings, t.name, t.value)
-            else:
-                Text.reset(Text.all_text)  # TODO limit to one use
+            elif self.input_mode:
+                Text.reset(Text.all_text)
         elif right_button and self.collided and not self.ignore_collision and not Text.clicked:
             Text.clicked = True
             texts = [t for t in Text.all_text if t.prev_collided]
@@ -233,7 +233,7 @@ class Text:
             self.value = getattr(Text.settings, self.name)
             self.slider.update(self.value)
             self.position = (self.slider.max_width, self.position[1])
-        elif right_button and not self.prev_collided:
+        elif right_button and not self.prev_collided and self.input_mode:
             Text.reset(Text.all_text)
         elif not right_button and not left_button :
             Text.clicked = False
@@ -261,7 +261,6 @@ class Text:
                 else:
                     self.rendered_text = self.font.render(f"{self.orig_text}{self.value_str}", True, self.fg_color)
 
-                #if self.prev_collided: # TODO check if working correctly after changes
                 size = (self.rendered_text.get_width(), self.rendered_text.get_height())
                 self.slider.collision_rect.update(self.slider.collision_rect.topleft, size)
                 self.slider.update(self.value)
@@ -361,20 +360,21 @@ class Particle:
             Particle.settings.repel_multiplier = Utils.randint(0, MAX_REPEL_MULTIPLIER)
         elif not middle_button and not right_button and not left_button:
             Particle.clicked = False
+            self._handle_movement(Utils.normalize(direction, magnitude), Particle.settings.speed)
 
         if magnitude < Particle.settings.barrier_dist:
             movement = Utils.randfloat(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)
             self._handle_movement(movement, Particle.settings.repel_multiplier)
-        else:
-            self._handle_movement(Utils.normalize(direction, magnitude), Particle.settings.speed)
+        #elif not Particle.clicked:#else:
+
 
     def update(self):
         self.rect.center = self.position
 
     def draw(self, surface):
         self.update()
-        surface.blit(self.surface, self.rect.topleft)
-        # pg.draw.rect(surface, self.bg_color, self.rect)
+        #surface.blit(self.surface, self.rect.topleft)
+        pg.draw.rect(surface, self.bg_color, self.rect)
         # pg.draw.circle(surface, self.bg_color, self.rect.center, self.size[0])
 
     @classmethod
@@ -464,7 +464,7 @@ class Game:
 
 if __name__ == '__main__':
     pg.init()
-    display = pg.display.set_mode(SCREEN_SIZE, flags=pg.RESIZABLE | pg.DOUBLEBUF)
+    display = pg.display.set_mode(SCREEN_SIZE, flags=pg.RESIZABLE | pg.DOUBLEBUF | pg.HWSURFACE)
     pg.display.set_caption("Particle Simulator")
 
     Game(display).run()
