@@ -1,10 +1,10 @@
 import math, random, sys
-from array import array
 from functools import lru_cache
 import pygame as pg
-import cProfile as cp
+from pygame import gfxdraw  # Unstable avoid
+
 """ Constants """
-MAX_PARTICLES = 5000
+MAX_PARTICLES = 5_000
 SCREEN_SIZE = (1250, 750)
 FPS = 60
 
@@ -34,35 +34,27 @@ class Utils:
         return 0, 0
 
     @staticmethod
-    def intarray(num_list):
-        return array("i", num_list)
+    def randint(min, max, size=1):
+        """ Generate random integer number inclusively """
+        width = max - min + 1
+        if size > 1:
+            return [math.floor(random.random() * width + min) for _ in range(size)]
+        return math.floor(random.random() * width + min)
 
     @staticmethod
-    def floatarray(num_list):
-        return array("f", num_list)
+    def randfloat(min, max, size=1):
+        """ Generate random float number excludes max"""
+        width = max - min
+        if size > 1:
+            return [random.random() * width + min for _ in range(size)]
+        return random.random() * width + min
 
     @staticmethod
-    def randint(min, max, count=1):
-        """ Max is inclusive """
-        min = math.ceil(min)
-        max = math.floor(max + 1)
-
-        if count > 1:
-            return [math.floor(random.random() * (max - min) + min) for _ in range(count)]
-        return math.floor(random.random() * (max - min) + min)
-
-    @staticmethod
-    def randfloat(min, max, count=1):
-        """ Max is exclusive"""
-        if count > 1:
-            return [random.random() * (max - min) + min for _ in range(count)]
-        return random.random() * (max - min) + min
-
-    @staticmethod
-    def rand_uniform(min, max, count=1):
-        if count > 1:
-            return [random.uniform(min, max) for _ in range(count)]
+    def rand_uniform(min, max, size=1):
+        if size > 1:
+            return [random.uniform(min, max) for _ in range(size)]
         return random.uniform(min, max)
+
 
 class Settings:
     def __init__(self):
@@ -108,6 +100,7 @@ class Settings:
                f"barrier dist: {self._barrier_dist}\n" \
                f"repel dist: {self._repel_dist}\n" \
                f"repel mult: {self._repel_multiplier}\n"
+
 
 class Slider:
     def __init__(self,
@@ -204,11 +197,12 @@ class Text:
             self.fg_color = pg.Color("grey")
 
         if left_button and not Text.clicked:
-            if self.slider.collision_rect.collidepoint(mouse_pos):
+            if not self.ignore_collision and self.slider.collision_rect.collidepoint(mouse_pos):
                 Text.clicked = True
                 self.input_mode = True
                 self.input_started = True
                 self.fg_color = pg.Color("white")
+                self.font.set_italic(True)
                 self.rendered_text = self.font.render(f"{self.orig_text}{self.value}", True, self.fg_color)
                 self.value_str = str(self.value)
                 for t in Text.all_text:
@@ -220,7 +214,7 @@ class Text:
                         t.prev_value = -1
                         t.value = int(t.value_str) if t.value_str.isnumeric() and t.value_str == t.value else t.value # Here bug
                         setattr(Text.settings, t.name, t.value)
-            elif self.input_mode:
+            elif self.input_mode:  # TODO Repel Multiplier not setting when clicked after input mode set
                 Text.reset(Text.all_text)
         elif right_button and self.collided and not self.ignore_collision and not Text.clicked and not Particle.freeze_time:
             Text.clicked = True
@@ -286,7 +280,7 @@ class Text:
 
     @classmethod
     def reset(cls, texts):
-        for t in texts:
+        for t in texts: # TODO Not reseting repel multiplier
             if t.input_mode:
                 t.input_mode = False
                 t.keying = False
@@ -296,6 +290,7 @@ class Text:
                 t.prev_value = -1
                 t.value = int(t.value_str) if len(t.value_str) > 0 else 0
                 setattr(cls.settings, t.name, t.value)
+                t.font.set_italic(False)
                 t.rendered_text = t.font.render(f"{t.orig_text}{t.value_str}", True, t.fg_color)
 
     @classmethod
@@ -343,7 +338,7 @@ class Particle:
             if self.rect.colliderect(rect):
                 pass  # self.position =
 
-    def _handle_movement(self, movement, multiplier=0):  # TODO Slow2
+    def _handle_movement(self, movement, multiplier=1):
         movement = (movement[0] * multiplier, movement[1] * multiplier)
         self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
 
@@ -354,8 +349,7 @@ class Particle:
 
         if left_button and not Particle.clicked:
             if not Text.clicked:
-                movement = Utils.randfloat(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)
-                # movement = Utils.rand_uniform(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)
+                movement = Utils.randfloat(-Particle.settings.repel_dist, Particle.settings.repel_dist, size=2)
                 self._handle_movement(movement, 15)
             else:
                 Particle.clicked = True
@@ -375,9 +369,8 @@ class Particle:
         if not Particle.freeze_time:
             self._handle_movement(Utils.normalize(direction, magnitude), Particle.settings.speed)
 
-        if magnitude < Particle.settings.barrier_dist:  # TODO Slow1, slow slow
-            movement = Utils.randfloat(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)  # TODO Slow1.1
-            # movement = Utils.rand_uniform(-Particle.settings.repel_dist, Particle.settings.repel_dist, count=2)  # Even slower
+        if magnitude < Particle.settings.barrier_dist:
+            movement = Utils.randfloat(-Particle.settings.repel_dist, Particle.settings.repel_dist, size=2)
             self._handle_movement(movement, Particle.settings.repel_multiplier)
 
     def update(self):
@@ -386,15 +379,17 @@ class Particle:
     def draw(self, surface):
         self.update()
         #surface.blit(self.surface, self.rect.topleft)
-        pg.draw.rect(surface, self.bg_color, self.rect)
-        # pg.draw.circle(surface, self.bg_color, self.rect.center, self.size[0])
+        #pg.draw.rect(surface, self.bg_color, self.rect)
+        pg.draw.circle(surface, self.bg_color, self.rect.center, self.size[1])
+        #gfxdraw.box(surface, self.rect, self.bg_color)
+        #gfxdraw.filled_circle(surface, self.rect.center[0], self.rect.center[1], self.size[1], self.bg_color)
 
     @classmethod
     def create(cls, amount=0):
         for i in range(amount):
-            size = Utils.randint(1, 5, count=2)
-            position = Utils.randint(0, 1000, count=2)
-            color = Utils.randint(0, 255, count=3)
+            size = Utils.randint(1, 5, size=2)
+            position = Utils.randint(0, 1000, size=2)
+            color = Utils.randint(0, 255, size=3)
             kwargs = {
                 "size": size,
                 "position": position,
@@ -459,12 +454,12 @@ class Game:
         keys = pg.key.get_pressed()
 
         Text.group_events(mouse_pos, mouse_buttons, keys) # TODO Event Controller to handle events between classes
-        Particle.group_events(mouse_pos, mouse_buttons)
+        Particle.group_events(mouse_pos, mouse_buttons)  # TODO pass in dt?
 
     def run(self):
         while self.running:
             if True:
-                self.screen.fill(self.bg_color)  # TODO draw but don't refresh the background
+                self.screen.fill(self.bg_color)
             self.handle_events(pg.event.get())
 
             Particle.group_draw(self.screen)
@@ -481,4 +476,3 @@ if __name__ == '__main__':
     pg.display.set_caption("Particle Simulator")
 
     Game(display).run()
-    #cp.run("Game(display).run()")
