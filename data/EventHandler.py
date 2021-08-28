@@ -1,7 +1,7 @@
 import sys
 import pygame as pg
-import Utils
-from CONSTANTS import *
+from data import Utils
+from data.constants import *
 
 class EventHandler:
     def __init__(self, text_group, particle_group, settings):

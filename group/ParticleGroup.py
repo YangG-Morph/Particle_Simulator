@@ -1,5 +1,5 @@
-from Group import Group
-from Particle import Particle
+from group.Group import Group
+from data.Particle import Particle
 
 class ParticleGroup(Group):
     def __init__(self, *members):

@@ -1,6 +1,4 @@
 
-
-
 class Group(list):
     def __init__(self, *members):
         super().__init__(*members)
@@ -24,7 +22,6 @@ class Group(list):
 
     def draw(self, surface):
         [member.draw(surface) for member in self.members]
-
 
 
 

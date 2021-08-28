@@ -1,5 +1,6 @@
 import pygame as pg
-import Utils
+from data import Utils
+
 
 class Particle:
     def __init__(self,

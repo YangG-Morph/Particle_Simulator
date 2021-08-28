@@ -1,13 +1,10 @@
-import sys
 import pygame as pg
-from pygame import gfxdraw  # Unstable avoid
-from Text import Text
-from Particle import Particle
-from Settings import Settings
-from CONSTANTS import *
-from EventHandler import EventHandler
-from TextGroup import TextGroup
-from ParticleGroup import ParticleGroup
+from ui.Text import Text
+from data.Settings import Settings
+from data.constants import *
+from data.EventHandler import EventHandler
+from group.TextGroup import TextGroup
+from group.ParticleGroup import ParticleGroup
 
 
 class Game:

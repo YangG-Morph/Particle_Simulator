@@ -1,6 +1,5 @@
 import pygame as pg
-
-from Slider import Slider
+from ui.Slider import Slider
 
 class Text:
     margin_y = 3

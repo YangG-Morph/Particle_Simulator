@@ -1,5 +1,5 @@
-import Utils
-from CONSTANTS import *
+from data import Utils
+from data.constants import *
 
 class Settings:
     def __init__(self):
