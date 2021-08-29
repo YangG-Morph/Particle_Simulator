@@ -14,6 +14,7 @@ class EventHandler:
 
         if left_button and not self.particle_group.clicked:
             if not self.text_group.clicked:
+                #self.particle_group.clicked = False
                 self.particle_group.set_movement(self.settings)
             else:
                 self.particle_group.clicked = True
@@ -26,7 +27,7 @@ class EventHandler:
             self.text_group.set_str_value(self.settings)
         elif right_button and not self.particle_group.clicked and not self.text_group.clicked:
             self.particle_group.time_frozen = True
-        elif not middle_button:
+        elif not middle_button and not right_button: # If it is middle_button then don't reset
             self.particle_group.clicked = False
             self.particle_group.time_frozen = False
 
@@ -91,7 +92,7 @@ class EventHandler:
         self.handle_text(mouse_pos, mouse_buttons)
         self.handle_particle(mouse_buttons)
         self.text_group.events(keys)
-        self.particle_group.events(mouse_pos, self.settings)
+        self.particle_group.events(mouse_pos, self.settings, mouse_buttons)
 
 
 

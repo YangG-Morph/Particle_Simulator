@@ -8,8 +8,8 @@ class ParticleGroup(Group):
         self.clicked = False
         self.time_frozen = False
 
-    def events(self, mouse_pos, settings):
-        [particle.events(mouse_pos, settings, self.time_frozen) for particle in self.members]
+    def events(self, mouse_pos, settings, mouse_buttons):
+        [particle.events(mouse_pos, settings, self.time_frozen, mouse_buttons) for particle in self.members]
 
     def set_movement(self, settings):
         [particle.set_movement(settings) for particle in self.members]

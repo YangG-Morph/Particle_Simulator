@@ -31,16 +31,15 @@ class Particle:
         movement = Utils.randfloat(-settings.repel_dist, settings.repel_dist, size=2)
         self.handle_movement(movement, 15)
 
-    def events(self, mouse_pos, settings, time_frozen):
+    def events(self, mouse_pos, settings, time_frozen, mouse_buttons):
         direction = Utils.sub_pos(mouse_pos, self.position)
         magnitude = Utils.hypotenuse(direction)
-
-        if not time_frozen:
-            self.handle_movement(Utils.normalize(direction, magnitude), settings.speed)
 
         if magnitude < settings.barrier_dist:
             movement = Utils.randfloat(-settings.repel_dist, settings.repel_dist, size=2)
             self.handle_movement(movement, settings.repel_multiplier)
+        elif not time_frozen and not mouse_buttons[0]:
+            self.handle_movement(Utils.normalize(direction, magnitude), settings.speed)
 
     def update(self, settings):
         self.rect.center = self.position
