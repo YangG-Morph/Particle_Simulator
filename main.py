@@ -1,8 +1,10 @@
 import pygame as pg
+import pygame.display
+
 from ui.Text import Text
 from data.Settings import Settings
 from data.constants import *
-from data.EventHandler import EventHandler
+from data.GroupEventHandler import GroupEventHandler
 from group.TextGroup import TextGroup
 from group.ParticleGroup import ParticleGroup
 
@@ -25,19 +27,26 @@ class Game:
         self.text_group.create("repel_dist", "Repel distance: ", bg_color=self.bg_color, max_width=MAX_REPEL_DIST)
         self.text_group.create("repel_multiplier", "Repel multiplier: ", bg_color=self.bg_color,
                                max_width=MAX_REPEL_MULTIPLIER)
-        self.fps_text = Text(text="FPS: ", bg_color=self.bg_color, ignore=True)
+        self.fps_text = Text(text="FPS: ", bg_color=self.bg_color)
+        self.particle_text = Text(text=f"Particles: {MAX_PARTICLES:,d}",
+                                  bg_color=self.bg_color,
+                                  position=(0, SCREEN_SIZE[1]-50),
+                                  anchor_left=True,
+                                  anchor_bottom=True, )
+        self.particle_text.update_position(pg.display.get_surface().get_size())
 
         self.particle_group.create(MAX_PARTICLES)
         self.text_group.init(self.settings)
         self.fps_text.init(settings=None, idx=4)
-        self.event_handler = EventHandler(self.text_group, self.particle_group, self.settings)
+        self.event_handler = GroupEventHandler(self.text_group, self.particle_group, self.settings)
 
     def run(self):
         while self.running:
             if True:  # TODO Freeze screen refresh feature
                 self.screen.fill(self.bg_color)
+            events = pg.event.get()
 
-            self.event_handler.handle_events(pg.event.get())
+            self.event_handler.handle_events(events)
 
             self.particle_group.update(self.settings)
             self.text_group.update(self.settings)
@@ -47,6 +56,8 @@ class Game:
             self.fps_text.set_value(int(self.clock.get_fps()))
             self.fps_text.update()
             self.fps_text.draw(self.screen)
+            [self.particle_text.update_position(pg.display.get_surface().get_size()) for event in events if event.type in [pg.WINDOWRESIZED]]
+            self.particle_text.draw(self.screen)
 
             pg.display.flip()
 

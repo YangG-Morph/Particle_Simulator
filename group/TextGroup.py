@@ -51,12 +51,10 @@ class TextGroup(Group):
                 return text
 
     def set_value(self, settings):
-        for text in self.members:
-            text.set_value(getattr(settings, text.name))
+        [text.set_value(getattr(settings, text.name)) for text in self.members]
 
     def set_str_value(self, settings):
-        for text in self.members:
-            text.set_str_value(getattr(settings, text.name))
+        [text.set_str_value(getattr(settings, text.name)) for text in self.members]
 
     def had_collided(self):
         if [text for text in self.members if text.prev_collided]:

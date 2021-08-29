@@ -3,7 +3,7 @@ import pygame as pg
 from data import Utils
 from data.constants import *
 
-class EventHandler:
+class GroupEventHandler:
     def __init__(self, text_group, particle_group, settings):
         self.text_group = text_group
         self.particle_group = particle_group

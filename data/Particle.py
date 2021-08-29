@@ -13,15 +13,12 @@ class Particle:
         self.position = position
         self.bg_color = bg_color
         self.fg_color = fg_color
-        self.rect = pg.Rect(position, size)
-        self.surface = pg.Surface(size)
-        self.surface.fill(self.bg_color)
         self.prev_pos = None
 
-    def handle_collision(self, other_rects):
-        for rect in other_rects:
-            if self.rect.colliderect(rect):
-                pass  # self.position =
+    #def handle_collision(self, other_rects):
+    #    for rect in other_rects:
+    #        if self.rect.colliderect(rect):
+    #            pass  # self.position =
 
     def handle_movement(self, movement, multiplier=1):
         movement = (movement[0] * multiplier, movement[1] * multiplier)
@@ -42,14 +39,10 @@ class Particle:
             self.handle_movement(Utils.normalize(direction, magnitude), settings.speed)
 
     def update(self, settings):
-        self.rect.center = self.position
+        pass
 
     def draw(self, surface):
-        #surface.blit(self.surface, self.rect.topleft)
-        #pg.draw.rect(surface, self.bg_color, self.rect)
-        pg.draw.circle(surface, self.bg_color, self.rect.center, self.size[1])
-        #gfxdraw.box(surface, self.rect, self.bg_color)
-        #gfxdraw.filled_circle(surface, self.rect.center[0], self.rect.center[1], self.size[1], self.bg_color)
+        pg.draw.circle(surface, self.bg_color, self.position, self.size[1])
 
     @classmethod
     def create(cls):

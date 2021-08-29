@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import pygame as pg
 from ui.Slider import Slider
 
@@ -10,8 +12,10 @@ class Text:
                  text="",
                  bg_color=pg.Color("black"),
                  fg_color=pg.Color("grey"),
-                 ignore=False,
                  max_width=500,
+                 position=(0, 0),
+                 anchor_left=False,
+                 anchor_bottom=False,
                  ):
         self.orig_text = text
         self.bg_color = bg_color
@@ -27,12 +31,13 @@ class Text:
         self.prev_color = None
         self.prev_collided = False
         self.max_width = max_width
-        self.ignore = ignore
         self.input_mode = False
         self.keying = False
         self.input_started = False
         self.index = -1
-        self.position = (0, 0)
+        self.position = position
+        self.anchor_left = anchor_left
+        self.anchor_bottom = anchor_bottom
         self.slider = Slider(
             self.position,
             (self.rendered_text.get_width(), self.rendered_text.get_height()),
@@ -99,11 +104,23 @@ class Text:
             if self.prev_value != self.value:
                 self.prev_value = self.value
                 self.rendered_text = self.font.render(f"{self.orig_text}{self.value}", True, self.fg_color)
+    def update_position(self, pos):
+        x, y = self.position
+        if self.anchor_left:
+            x = 0
+        if self.anchor_bottom:
+            y = pos[1] - self.rendered_text.get_height()
+        self.position = x, y
 
     def draw(self, surface):
         surface.blit(self.rendered_text, self.position)
         if self.prev_collided:
             self.slider.draw(surface)
+
+    def draw_bottom_left(self, surface):
+        width, height = pg.display.get_surface().get_size()
+        self.position = (0, height - self.rendered_text.get_height())
+        surface.blit(self.rendered_text, self.position)
 
     def set_value(self, value):
         self.value = value
