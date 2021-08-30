@@ -13,22 +13,19 @@ class GroupEventHandler:
     def handle_particle(self, mouse_pressed):
         left_button, middle_button, right_button = mouse_pressed
 
-        if left_button and not self.particle_group.clicked:
-            if not self.text_group.clicked:
-                #self.particle_group.clicked = False
-                self.particle_group.set_movement(self.settings)
-            else:
-                self.particle_group.clicked = True
+        if left_button and not self.particle_group.clicked and not self.text_group.clicked:
+            self.particle_group.clicked = True
+            self.particle_group.set_movement(self.settings)
         elif middle_button and not self.particle_group.clicked:
             self.particle_group.clicked = True
             setattr(self.settings, "speed", Utils.randint(0, MAX_SPEED))
             setattr(self.settings, "barrier_dist", Utils.randint(0, MAX_BARRIER_DIST))
-            setattr(self.settings, "repel_dist", Utils.randint(0, MAX_REPEL_DIST))
-            setattr(self.settings, "repel_multiplier", Utils.randint(0, MAX_REPEL_MULTIPLIER))
+            setattr(self.settings, "repel_dist", Utils.randint(0, MAX_MOUSE_DIST))
+            setattr(self.settings, "mouse_repel_dist", Utils.randint(0, MAX_REPEL_DIST))
             self.text_group.set_str_value(self.settings)
         elif right_button and not self.particle_group.clicked and not self.text_group.clicked:
             self.particle_group.time_frozen = True
-        elif not middle_button and not right_button: # If it is middle_button then don't reset
+        elif not middle_button and not right_button:
             self.particle_group.clicked = False
             self.particle_group.time_frozen = False
 

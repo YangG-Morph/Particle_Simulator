@@ -5,8 +5,8 @@ class Settings:
     def __init__(self):
         self._speed = 10
         self._barrier_dist = 20
-        self._repel_dist = 10
-        self._repel_multiplier = 2
+        self._repel_dist = 2
+        self._mouse_repel_dist = 10
 
     @property
     def speed(self):
@@ -33,16 +33,18 @@ class Settings:
         self._repel_dist = Utils.clamp(value, 0, MAX_REPEL_DIST)
 
     @property
-    def repel_multiplier(self):
-        return self._repel_multiplier
+    def mouse_repel_dist(self):
+        return self._mouse_repel_dist
 
-    @repel_multiplier.setter
-    def repel_multiplier(self, value):
-        self._repel_multiplier = Utils.clamp(value, 0, MAX_REPEL_MULTIPLIER)
+    @mouse_repel_dist.setter
+    def mouse_repel_dist(self, value):
+        self._mouse_repel_dist = Utils.clamp(value, 0, MAX_MOUSE_DIST)
+
+
 
     def __str__(self):
         return f"speed: {self._speed}\n" \
                f"barrier dist: {self._barrier_dist}\n" \
-               f"repel dist: {self._repel_dist}\n" \
-               f"repel mult: {self._repel_multiplier}\n"
+               f"repel dist: {self._mouse_repel_dist}\n" \
+               f"repel mult: {self._repel_dist}\n"
 

@@ -18,7 +18,7 @@ class Particle:
         for particle in other_particles:
             if particle is not self and self.collided(particle):
                 movement = Utils.randfloat(-1, 1, size=2)
-                self.handle_movement(movement, 10)
+                self.update(movement, 10)
 
     def collided(self, particle):
         direction = Utils.sub_pos(particle.position, self.position)
@@ -27,26 +27,23 @@ class Particle:
         if magnitude <= 100:
             return True
 
-    def handle_movement(self, movement, multiplier=1):
-        movement = (movement[0] * multiplier, movement[1] * multiplier)
-        self.position = (self.position[0] + movement[0], self.position[1] + movement[1])
+    def update(self, direction, multiplier=1):
+        direction = (direction[0] * multiplier, direction[1] * multiplier)
+        self.position = (self.position[0] + direction[0], self.position[1] + direction[1])
 
     def set_movement(self, settings):
-        movement = Utils.randfloat(-settings.repel_dist, settings.repel_dist, size=2)
-        self.handle_movement(movement, 15)
+        direction = Utils.randfloat(-settings.mouse_repel_dist, settings.mouse_repel_dist, size=2)
+        self.update(direction, 15)
 
     def events(self, mouse_pos, settings, time_frozen, mouse_buttons):
         direction = Utils.sub_pos(mouse_pos, self.position)
         magnitude = Utils.hypotenuse(direction)
 
         if magnitude < settings.barrier_dist:
-            movement = Utils.randfloat(-settings.repel_dist, settings.repel_dist, size=2)
-            self.handle_movement(movement, settings.repel_multiplier)
+            direction = Utils.randfloat(-settings.repel_dist, settings.repel_dist, size=2)
+            self.update(direction, settings.repel_dist)
         elif not time_frozen and not mouse_buttons[0]:
-            self.handle_movement(Utils.normalize(direction, magnitude), settings.speed)
-
-    def update(self, settings):
-        pass
+            self.update(Utils.normalize(direction, magnitude), settings.speed)
 
     def draw(self, surface):
         pg.draw.circle(surface, self.bg_color, self.position, self.size[1])

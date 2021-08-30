@@ -8,6 +8,7 @@ class Text:
     margin_left = 5
     margin_right = 5
     padding_left = 8
+    text_spacing = 1
 
     def __init__(self,
                  name="",
@@ -21,7 +22,7 @@ class Text:
                  anchor_left=False,
                  anchor_right=False,
                  ):
-        self.orig_text = text
+        self.orig_text = text.upper()
         self.bg_color = bg_color
         self.fg_color = fg_color
         self.name = name
@@ -57,20 +58,8 @@ class Text:
             self.value = getattr(settings, self.name)
             self.str_value = str(self.value)
             self.reset(settings)
-        else:
-            self.value = 0
         self.index = idx
-        self.position = (
-            0,
-            idx *
-            self.rendered_text.get_height() +
-            self.margin_top +
-            (self.index * self.padding_top)
-        )
         self.update_position(pg.display.get_surface().get_size())
-        self.slider.update(position=self.position,
-                           size=(self.rendered_text.get_width(),
-                                 self.rendered_text.get_height() + self.margin_top))
 
 
     def highlight(self):
@@ -120,11 +109,14 @@ class Text:
         if self.anchor_bottom:
             y = screen_size[1] - self.rendered_text.get_height()
         if self.anchor_top:
-            y = (0 + self.rendered_text.get_height()) * self.index + self.margin_top
+            y = self.rendered_text.get_height() * self.index + self.margin_top
         if self.anchor_right:
             size = self.font.get_rendered_size(f"{self.orig_text}{self.value:02}")
             x = screen_size[0] - (size[0] + self.margin_right)
         self.position = x, y
+        self.slider.update(position=self.position,
+                           size=(self.rendered_text.get_width(),
+                                 self.rendered_text.get_height() + self.margin_top))
 
     def draw(self, surface):
         surface.blit(self.rendered_text, self.position)

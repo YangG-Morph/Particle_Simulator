@@ -19,6 +19,9 @@ class ParticleGroup(Group):
         if self.butterfly_mode:
             [particle.handle_collision(other_particles) for particle in self.members]
 
+    def update(self, direction, multiplier=1):
+        pass
+
     def create(self, amount):
         for _ in range(amount):
             self.append(Particle.create())

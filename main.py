@@ -21,12 +21,12 @@ class Game:
 
         self.text_group.create_text("speed", "Speed: ", bg_color=self.bg_color, max_width=MAX_SPEED,
                                     anchor_left=True, anchor_top=True)
-        self.text_group.create_text("barrier_dist", "Barrier distance: ", bg_color=self.bg_color,
+        self.text_group.create_text("barrier_dist", "Barrier: ", bg_color=self.bg_color,
                                     max_width=MAX_BARRIER_DIST, anchor_left=True, anchor_top=True)
-        self.text_group.create_text("repel_dist", "Repel distance: ", bg_color=self.bg_color,
+        self.text_group.create_text("repel_dist", "Repel: ", bg_color=self.bg_color,
                                     max_width=MAX_REPEL_DIST, anchor_left=True, anchor_top=True)
-        self.text_group.create_text("repel_multiplier", "Repel multiplier: ", bg_color=self.bg_color,
-                                    max_width=MAX_REPEL_MULTIPLIER, anchor_left=True, anchor_top=True)
+        self.text_group.create_text("mouse_repel_dist", "Mouse repel: ", bg_color=self.bg_color,
+                                    max_width=MAX_MOUSE_DIST, anchor_left=True, anchor_top=True)
         self.fps_text = Text(text="FPS: ", bg_color=self.bg_color, anchor_bottom=True, anchor_right=True)
         self.particle_text = Text(text=f"Particles: {MAX_PARTICLES:,d}",
                                   bg_color=self.bg_color,
