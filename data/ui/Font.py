@@ -1,7 +1,7 @@
 import pygame as pg
 import os
 from data.constants import DEFAULT_FONT, DEFAULT_FONT_BOLD
-from assets.paths import FONTS_DIR
+from data.assets.paths import FONTS_DIR
 
 class Font:
     def __init__(self):
