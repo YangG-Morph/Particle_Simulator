@@ -4,8 +4,9 @@ from data import Utils
 from data.constants import *
 
 class GroupEventHandler:
-    def __init__(self, text_group, particle_group, settings):
+    def __init__(self, text_group, display_only_group, particle_group, settings):
         self.text_group = text_group
+        self.display_only_group = display_only_group
         self.particle_group = particle_group
         self.settings = settings
 
@@ -57,7 +58,7 @@ class GroupEventHandler:
             setattr(self.settings, text.name, movement + text.start_value)
             text.value = getattr(self.settings, text.name)
             text.slider.update(size=(text.value, 0))
-            text.position = (text.slider.max_width, text.position[1])
+            text.set_pos((text.slider.max_width + text.padding_left, text.position[1]))
         elif right_button and not self.text_group.had_collided():
             self.text_group.reset(self.settings)
 
@@ -70,29 +71,39 @@ class GroupEventHandler:
                 for text in self.text_group.members:
                     text.keying = False
             elif event.type in [pg.KEYDOWN]:
-                text = [t for t in self.text_group.members if t.input_mode]
-                if event.unicode.isdigit() and text:
-                    text = text[0]
-                    if text.input_started:
-                        text.str_value = event.unicode
+                text_clicked = [t for t in self.text_group.members if t.input_mode]
+                if text_clicked:
+                    text = text_clicked[0]
+                    if event.unicode.isdigit():
+                        if text.input_started:
+                            text.str_value = event.unicode
+                            text.input_started = False
+                        else:
+                            text.str_value += event.unicode
+                    if event.key in [pg.K_BACKSPACE]:
+                        text.keying = True
                         text.input_started = False
-                    else:
-                        text.str_value += event.unicode
-                    text.rendered_text = text.font.render(f"{text.orig_text}{text.str_value}", True, text.fg_color)
+                        text.str_value = text.str_value[:-1]
+                    elif event.key in [pg.K_RETURN, pg.K_KP_ENTER]:
+                        text.reset(self.settings)
+                    text.rendered_text = text.font.render(f"{text.orig_text}{text.str_value}", text.fg_color)
             elif event.type in [pg.MOUSEBUTTONUP]:
                 self.text_group.clicked = False
                 if self.text_group.had_collided():
                     self.text_group.set_str_value(self.settings)
                     self.text_group.reset(self.settings)
+            elif event.type in [pg.WINDOWRESIZED]:
+                screen_size = pg.display.get_surface().get_size()
+                self.text_group.update_position(screen_size)
+                self.display_only_group.update_position(screen_size)
 
         mouse_pos = pg.mouse.get_pos()
         mouse_buttons = pg.mouse.get_pressed(num_buttons=3)
-        keys = pg.key.get_pressed()
 
         self.handle_text(mouse_pos, mouse_buttons)
         self.handle_particle(mouse_buttons)
-        self.text_group.events(keys)
         self.particle_group.events(mouse_pos, self.settings, mouse_buttons)
+
 
 
 

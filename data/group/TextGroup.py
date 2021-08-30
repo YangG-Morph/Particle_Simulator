@@ -1,7 +1,7 @@
 import pygame as pg
-from group.Group import Group
+from data.group.Group import Group
 from functools import lru_cache
-from ui.Text import Text
+from data.ui.Text import Text
 
 class TextGroup(Group):
     def __init__(self, *members):
@@ -9,8 +9,15 @@ class TextGroup(Group):
         self.members = [member for member in members]
         self.clicked = False
 
-    def create(self, *args, **kwargs):
+    def create_text(self, *args, **kwargs):
         self.append(Text(*args, **kwargs))
+
+    def add(self, *member):
+        if isinstance(member, (list, tuple)):
+            for m in member:
+                self.members.append(m)
+        else:
+            self.members.append(member)
 
     def keying(self):
         if [text for text in self.members if text.input_mode]:
@@ -22,13 +29,11 @@ class TextGroup(Group):
             collided.highlight()
             for text in self.members:
                 if text != collided:
-                    text.prev_color = text.fg_color
-                    text.fg_color = pg.Color("grey")
+                    text.dim()
         else:
             for text in self.members:
                 if not text.input_mode:
-                    text.prev_color = text.fg_color
-                    text.fg_color = pg.Color("grey")
+                    text.dim()
 
 
     def check_collision(self, mouse_pos):
@@ -49,6 +54,9 @@ class TextGroup(Group):
         for text in self.members:
             if text.prev_collided:
                 return text
+
+    def update_position(self, screen_size):
+        [text.update_position(screen_size) for text in self.members]
 
     def set_value(self, settings):
         [text.set_value(getattr(settings, text.name)) for text in self.members]

@@ -1,6 +1,5 @@
 
 
-
 """ Constants """
 MAX_PARTICLES = 5_000
 SCREEN_SIZE = (1250, 750)
@@ -10,6 +9,17 @@ MAX_SPEED = 500
 MAX_BARRIER_DIST = 500
 MAX_REPEL_DIST = 500
 MAX_REPEL_MULTIPLIER = 200
+
+""" Butterfly mode 
+MAX_SPEED = 1
+MAX_BARRIER_DIST = 0
+MAX_REPEL_DIST = 1
+MAX_REPEL_MULTIPLIER = 0
+magnitude <= 100
+"""
+
+""" FONT """
+DEFAULT_FONT = "PoiretOne-Regular.ttf"
 
 LEFT_BUTTON = 1
 MIDDLE_BUTTON = 2

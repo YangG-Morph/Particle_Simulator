@@ -13,12 +13,19 @@ class Particle:
         self.position = position
         self.bg_color = bg_color
         self.fg_color = fg_color
-        self.prev_pos = None
 
-    #def handle_collision(self, other_rects):
-    #    for rect in other_rects:
-    #        if self.rect.colliderect(rect):
-    #            pass  # self.position =
+    def handle_collision(self, other_particles):
+        for particle in other_particles:
+            if particle is not self and self.collided(particle):
+                movement = Utils.randfloat(-1, 1, size=2)
+                self.handle_movement(movement, 10)
+
+    def collided(self, particle):
+        direction = Utils.sub_pos(particle.position, self.position)
+        magnitude = Utils.hypotenuse(direction)
+
+        if magnitude <= 100:
+            return True
 
     def handle_movement(self, movement, multiplier=1):
         movement = (movement[0] * multiplier, movement[1] * multiplier)
