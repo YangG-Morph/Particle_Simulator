@@ -9,5 +9,6 @@ Left click to deflect particles, middle click to randomize settings and right cl
 Select settings to enter a number or right click for sliders.
 
 
-<img src="https://user-images.githubusercontent.com/38061493/131282082-99cf56bf-c939-4cab-8199-1850f31c4da7.png" width="750" height="480" />
+<img src="https://user-images.githubusercontent.com/38061493/131282360-c6900536-17fa-4b7f-98fd-d0e3f65ba3cb.png" width="750" height="450" />
+
 
