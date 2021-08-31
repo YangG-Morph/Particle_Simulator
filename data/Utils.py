@@ -1,7 +1,6 @@
 import math
 import random
 
-
 def clamp(value, min, max):
     return min if value < min else max if value > max else value
 
@@ -24,7 +23,7 @@ def randint(min, max, size=1):
     return math.floor(random.random() * width + min)
 
 def randfloat(min, max, size=1):
-    """ Generate random float number excludes max"""
+    """ Generate random float number excludes max """
     width = max - min
     if size > 1:
         return [random.random() * width + min for _ in range(size)]

@@ -10,7 +10,6 @@ class Game:
     def __init__(self, screen):
         self.screen = screen
         self.screen.set_alpha(None)
-        self.running = True
         self.clock = pg.time.Clock()
         self.bg_color = pg.Color("black")
 
@@ -42,7 +41,7 @@ class Game:
         self.event_handler = GroupEventHandler(self.text_group, self.display_only_group, self.particle_group, self.settings)
 
     def run(self):
-        while self.running:
+        while True:
             if True:  # TODO Freeze screen refresh feature
                 self.screen.fill(self.bg_color)
             events = pg.event.get()
@@ -50,7 +49,7 @@ class Game:
             self.event_handler.handle_events(events)
             self.particle_group.handle_collision(self.particle_group.members)
 
-            self.particle_group.update(self.settings)
+            #self.particle_group.update(self.settings)
             self.text_group.update(self.settings)
             self.particle_group.draw(self.screen)
             self.text_group.draw(self.screen)
@@ -61,13 +60,14 @@ class Game:
             self.particle_text.draw(self.screen)
 
             pg.display.flip()
-
             self.clock.tick(FPS)
 
 
 if __name__ == '__main__':
     pg.init()
-    display = pg.display.set_mode(SCREEN_SIZE, flags=pg.RESIZABLE | pg.DOUBLEBUF | pg.HWSURFACE)
+    screen_size = pg.display.Info()
+    screen_size = screen_size.current_w, screen_size.current_h
+    display = pg.display.set_mode(screen_size, flags=pg.RESIZABLE | pg.DOUBLEBUF | pg.HWSURFACE | pg.NOFRAME)
     pg.display.set_caption("Particle Simulator")
 
     Game(display).run()

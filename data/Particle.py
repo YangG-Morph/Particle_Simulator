@@ -1,6 +1,6 @@
 import pygame as pg
 from data import Utils
-
+import math
 
 class Particle:
     def __init__(self,
@@ -13,6 +13,8 @@ class Particle:
         self.position = position
         self.bg_color = bg_color
         self.fg_color = fg_color
+        self.randoms_mouse = (Utils.randfloat(-20, 20, size=2) for i in range(100_000))
+        self.randoms_repel = (Utils.randfloat(-20, 20, size=2) for i in range(100_000))
 
     def handle_collision(self, other_particles):
         for particle in other_particles:
@@ -22,7 +24,7 @@ class Particle:
 
     def collided(self, particle):
         direction = Utils.sub_pos(particle.position, self.position)
-        magnitude = Utils.hypotenuse(direction)
+        magnitude = math.hypot(direction[0], direction[1])
 
         if magnitude <= 100:
             return True
@@ -32,15 +34,25 @@ class Particle:
         self.position = (self.position[0] + direction[0], self.position[1] + direction[1])
 
     def set_movement(self, settings):
-        direction = Utils.randfloat(-settings.mouse_repel_dist, settings.mouse_repel_dist, size=2)
+        try:
+            direction = next(self.randoms_mouse)
+        except StopIteration:
+            self.randoms_mouse = (Utils.randfloat(-20, 20, size=2) for i in range(100_000_000))
+            direction = Utils.randfloat(-settings.mouse_repel_dist, settings.mouse_repel_dist, size=2)
+        #direction = Utils.randfloat(-settings.mouse_repel_dist, settings.mouse_repel_dist, size=2)
         self.update(direction, 15)
 
     def events(self, mouse_pos, settings, time_frozen, mouse_buttons):
         direction = Utils.sub_pos(mouse_pos, self.position)
-        magnitude = Utils.hypotenuse(direction)
+        magnitude = math.hypot(direction[0], direction[1])
 
         if magnitude < settings.barrier_dist:
-            direction = Utils.randfloat(-settings.repel_dist, settings.repel_dist, size=2)
+            try:
+                direction = next(self.randoms_repel)
+            except StopIteration:
+                self.randoms_repel = (Utils.randfloat(-20, 20, size=2) for i in range(100_000_000))
+                direction = Utils.randfloat(-settings.repel_dist, settings.repel_dist, size=2)
+            #direction = Utils.randfloat(-settings.repel_dist, settings.repel_dist, size=2)
             self.update(direction, settings.repel_dist)
         elif not time_frozen and not mouse_buttons[0]:
             self.update(Utils.normalize(direction, magnitude), settings.speed)
