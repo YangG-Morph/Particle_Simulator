@@ -1,10 +1,10 @@
 import pygame as pg
-from data.ui.Text import Text
-from data.Settings import Settings
+from data.ui.text import Text
+from data.settings import Settings
 from data.constants import *
-from data.GroupEventHandler import GroupEventHandler
-from data.group.TextGroup import TextGroup
-from data.group.ParticleGroup import ParticleGroup
+from data.groupeventhandler import GroupEventHandler
+from data.groups.textgroup import TextGroup
+from data.groups.particlegroup import ParticleGroup
 
 class Game:
     def __init__(self, screen):
@@ -17,6 +17,7 @@ class Game:
         self.display_only_group = TextGroup()
         self.particle_group = ParticleGroup()
         self.settings = Settings()
+        self.particle_group.create(MAX_PARTICLES)
 
         self.text_group.create_text("speed", "Speed: ", bg_color=self.bg_color, max_width=MAX_SPEED,
                                     anchor_left=True, anchor_top=True)
@@ -27,14 +28,13 @@ class Game:
         self.text_group.create_text("mouse_repel_dist", "Mouse repel: ", bg_color=self.bg_color,
                                     max_width=MAX_MOUSE_DIST, anchor_left=True, anchor_top=True)
         self.fps_text = Text(text="FPS: ", bg_color=self.bg_color, anchor_bottom=True, anchor_right=True)
-        self.particle_text = Text(text=f"Particles: {MAX_PARTICLES:,d}",
+        self.particle_text = Text(text=f"Particles: {len(self.particle_group.members):,d}",
                                   bg_color=self.bg_color,
                                   position=(0, SCREEN_SIZE[1]-50),
                                   anchor_left=True,
                                   anchor_bottom=True,
                                   )
         self.display_only_group.add(self.fps_text, self.particle_text)
-        self.particle_group.create(MAX_PARTICLES)
         self.particle_group.butterfly_mode = False
         self.text_group.init(self.settings)
         self.display_only_group.update_position(pg.display.get_surface().get_size())

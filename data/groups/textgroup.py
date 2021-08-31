@@ -1,7 +1,7 @@
 import pygame as pg
-from data.group.Group import Group
+from data.groups.group import Group
 from functools import lru_cache
-from data.ui.Text import Text
+from data.ui.text import Text
 
 class TextGroup(Group):
     def __init__(self, *members):

@@ -15,21 +15,24 @@ def normalize(ab, magnitude):
         return ab[0] / magnitude, ab[1] / magnitude
     return 0, 0
 
-def randint(min, max, size=1):
+def randint(min, max):
     """ Generate random integer number inclusively """
     width = max - min + 1
-    if size > 1:
-        return [math.floor(random.random() * width + min) for _ in range(size)]
     return math.floor(random.random() * width + min)
 
-def randfloat(min, max, size=1):
+def randint_sample(min, max, size):
+    """ Generate sample of random integers number inclusively """
+    width = max - min + 1
+    return [math.floor(random.random() * width + min) for _ in range(size)]
+
+def randfloat(min, max):
     """ Generate random float number excludes max """
     width = max - min
-    if size > 1:
-        return [random.random() * width + min for _ in range(size)]
     return random.random() * width + min
 
-def rand_uniform(min, max, size=1):
-    if size > 1:
-        return [random.uniform(min, max) for _ in range(size)]
-    return random.uniform(min, max)
+def randfloat_sample(min, max, size):
+    """ Generate sample of random float numbers excludes max """
+    width = max - min
+    return [random.random() * width + min for _ in range(size)]
+
+

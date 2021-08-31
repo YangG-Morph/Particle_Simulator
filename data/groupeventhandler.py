@@ -1,6 +1,6 @@
 import sys
 import pygame as pg
-from data import Utils
+from data import utils
 from data.constants import *
 
 class GroupEventHandler:
@@ -18,10 +18,10 @@ class GroupEventHandler:
             self.particle_group.set_movement(self.settings)
         elif middle_button and not self.particle_group.clicked:
             self.particle_group.clicked = True
-            setattr(self.settings, "speed", Utils.randint(0, MAX_SPEED))
-            setattr(self.settings, "barrier_dist", Utils.randint(0, MAX_BARRIER_DIST))
-            setattr(self.settings, "repel_dist", Utils.randint(0, MAX_MOUSE_DIST))
-            setattr(self.settings, "mouse_repel_dist", Utils.randint(0, MAX_REPEL_DIST))
+            setattr(self.settings, "speed", utils.randint(0, MAX_SPEED))
+            setattr(self.settings, "barrier_dist", utils.randint(0, MAX_BARRIER_DIST))
+            setattr(self.settings, "repel_dist", utils.randint(0, MAX_MOUSE_DIST))
+            setattr(self.settings, "mouse_repel_dist", utils.randint(0, MAX_REPEL_DIST))
             self.text_group.set_str_value(self.settings)
         elif right_button and not self.particle_group.clicked and not self.text_group.clicked:
             self.particle_group.time_frozen = True

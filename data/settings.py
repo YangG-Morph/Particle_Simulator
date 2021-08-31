@@ -1,4 +1,4 @@
-from data import Utils
+from data import utils
 from data.constants import *
 
 class Settings:
@@ -14,7 +14,7 @@ class Settings:
 
     @speed.setter
     def speed(self, value):
-        self._speed = Utils.clamp(value, 0, MAX_SPEED)
+        self._speed = utils.clamp(value, 0, MAX_SPEED)
 
     @property
     def barrier_dist(self):
@@ -22,7 +22,7 @@ class Settings:
 
     @barrier_dist.setter
     def barrier_dist(self, value):
-        self._barrier_dist = Utils.clamp(value, 0, MAX_BARRIER_DIST)
+        self._barrier_dist = utils.clamp(value, 0, MAX_BARRIER_DIST)
 
     @property
     def repel_dist(self):
@@ -30,7 +30,7 @@ class Settings:
 
     @repel_dist.setter
     def repel_dist(self, value):
-        self._repel_dist = Utils.clamp(value, 0, MAX_REPEL_DIST)
+        self._repel_dist = utils.clamp(value, 0, MAX_REPEL_DIST)
 
     @property
     def mouse_repel_dist(self):
@@ -38,7 +38,7 @@ class Settings:
 
     @mouse_repel_dist.setter
     def mouse_repel_dist(self, value):
-        self._mouse_repel_dist = Utils.clamp(value, 0, MAX_MOUSE_DIST)
+        self._mouse_repel_dist = utils.clamp(value, 0, MAX_MOUSE_DIST)
 
 
 

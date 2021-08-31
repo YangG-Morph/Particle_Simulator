@@ -1,6 +1,6 @@
 import pygame as pg
-from data.ui.Slider import Slider
-from data.ui.Font import Font
+from data.ui.slider import Slider
+from data.ui.font import Font
 
 class Text:
     margin_top = 5
